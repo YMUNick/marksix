@@ -1,0 +1,35 @@
+name: 🎲 更新六合彩資料
+
+on:
+  schedule:
+    # 每天香港時間 22:30 自動執行（UTC 14:30）
+    - cron: '30 14 * * *'
+  workflow_dispatch:
+    # 也可以在 GitHub Actions 頁面手動觸發
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: 🕷️ Scrape & build
+        run: python build_site.py
+
+      - name: 🚀 Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html marksix_all_draws.json marksix_compact.json
+          git diff --staged --quiet || git commit -m "🔄 自動更新：$(date +%Y-%m-%d)"
+          git push
