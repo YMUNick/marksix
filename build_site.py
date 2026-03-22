@@ -93,9 +93,11 @@ def scrape_year(year):
         main_nums = sorted(all_nums[:6])
         special = all_nums[6]
         
+        days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
         draws.append({
             "draw_id": draw_num_el,
             "draw_date": date_str,
+            "day_of_week": days[dt.weekday()],
             "numbers": main_nums,
             "special_number": special
         })
@@ -320,23 +322,42 @@ def build_site(draws):
     # Read the template HTML and replace data
     data_json = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
     
+    # Always save compact JSON as backup
+    with open('marksix_compact.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
+    print(f"💾 精簡資料已儲存至 marksix_compact.json")
+    
     # Check if index.html exists as template
     if os.path.exists('index.html'):
         with open('index.html', 'r', encoding='utf-8') as f:
-            html = f.read()
+            lines = f.readlines()
         
-        # Replace the DATA variable
-        html = re.sub(r'var DATA=\{.*?\};', f'var DATA={data_json};', html, count=1, flags=re.DOTALL)
+        # Find and replace the line that starts with "var DATA="
+        replaced = False
+        new_line = f'var DATA={data_json};\n'
+        for i, line in enumerate(lines):
+            if line.strip().startswith('var DATA='):
+                lines[i] = new_line
+                replaced = True
+                print(f"   ✅ 找到 DATA 在第 {i+1} 行，已替換")
+                break
         
-        with open('index.html', 'w', encoding='utf-8') as f:
-            f.write(html)
-        print(f"✅ index.html 已更新！({len(draws)} 期資料已嵌入)")
+        if not replaced:
+            print("   ⚠️ 在 index.html 中找不到 'var DATA=' 行")
+            print("   請手動將 marksix_compact.json 的內容貼到 index.html 的 var DATA= 行")
+        else:
+            with open('index.html', 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+            
+            # Verify
+            with open('index.html', 'r', encoding='utf-8') as f:
+                content = f.read()
+            if f'"total_draws":{len(draws)}' in content:
+                print(f"   ✅ 驗證成功！index.html 已包含 {len(draws)} 期資料")
+            else:
+                print("   ⚠️ 驗證失敗，請檢查 index.html")
     else:
-        # Save just the data
-        with open('marksix_compact.json', 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
-        print(f"💾 精簡資料已儲存至 marksix_compact.json")
-        print("⚠️ 找不到 index.html 模板，請手動將 DATA 替換到 HTML 中")
+        print("⚠️ 找不到 index.html 模板")
         print(f"   DATA JSON 大小：{len(data_json)} bytes")
     
     # Print summary
