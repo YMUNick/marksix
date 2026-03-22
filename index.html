@@ -8,139 +8,99 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg-deep: #06080d;
-  --bg-card: #0c1018;
-  --bg-glass: rgba(12, 16, 24, 0.92);
-  --border: rgba(255, 215, 0, 0.08);
-  --border-bright: rgba(255, 215, 0, 0.2);
-  --gold: #ffd700;
-  --gold-dim: #c9a84c;
-  --gold-glow: rgba(255, 215, 0, 0.15);
-  --red: #ff3d5a;
-  --red-glow: rgba(255, 61, 90, 0.2);
-  --cyan: #00e5ff;
-  --cyan-glow: rgba(0, 229, 255, 0.15);
-  --green: #00e676;
-  --text-primary: #f0ece4;
-  --text-secondary: #8a8578;
-  --text-dim: #4a463e;
-  --font-display: 'Orbitron', sans-serif;
-  --font-body: 'Noto Sans TC', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --radius: 12px;
-  --radius-sm: 6px;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior:smooth; -webkit-font-smoothing:antialiased; }
-body { background:var(--bg-deep); color:var(--text-primary); font-family:var(--font-body); min-height:100vh; overflow-x:hidden; }
-body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-  background: radial-gradient(ellipse 60% 40% at 20% 10%,rgba(255,215,0,.03) 0%,transparent 70%),
-  radial-gradient(ellipse 50% 50% at 80% 80%,rgba(0,229,255,.02) 0%,transparent 60%),
-  radial-gradient(ellipse 80% 60% at 50% 50%,rgba(255,61,90,.015) 0%,transparent 50%); }
-
-@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-@keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-@keyframes ballPop { 0%{transform:scale(0) rotate(-180deg);opacity:0} 60%{transform:scale(1.12) rotate(8deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:1} }
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-@keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
-.anim-up { animation:fadeUp .55s ease-out both; }
-
-.container { max-width:1280px; margin:0 auto; padding:0 20px; position:relative; z-index:1; }
-
-.header { padding:40px 0 20px; text-align:center; }
-.header-crown { font-size:36px; display:block; margin-bottom:8px; filter:drop-shadow(0 0 20px rgba(255,215,0,.4)); }
-.header h1 { font-family:var(--font-display); font-size:clamp(28px,5vw,48px); font-weight:900; letter-spacing:4px;
-  background:linear-gradient(135deg,var(--gold),#fff8dc,var(--gold)); background-size:200% 200%;
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-  animation:shimmer 4s ease-in-out infinite; }
-.header-sub { font-family:var(--font-display); font-size:11px; letter-spacing:6px; text-transform:uppercase; color:var(--text-secondary); }
-.header-meta { display:flex; justify-content:center; gap:24px; margin-top:14px; flex-wrap:wrap; }
-.header-meta span { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); font-family:var(--font-mono); }
-.dot-live { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
-
-.nav { position:sticky; top:0; z-index:100; background:var(--bg-glass); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid var(--border); margin-bottom:32px; }
-.nav-inner { display:flex; gap:0; overflow-x:auto; scrollbar-width:none; }
-.nav-inner::-webkit-scrollbar { display:none; }
-.nav-btn { background:none; border:none; padding:14px 20px; font-family:var(--font-body); font-size:13px; font-weight:500; color:var(--text-secondary); cursor:pointer; white-space:nowrap; position:relative; transition:color .3s; }
-.nav-btn:hover { color:var(--text-primary); }
-.nav-btn.active { color:var(--gold); }
-.nav-btn.active::after { content:''; position:absolute; bottom:0; left:20px; right:20px; height:2px; background:var(--gold); box-shadow:0 0 10px var(--gold-glow); }
-
-.card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:20px; transition:border-color .3s,box-shadow .3s; }
-.card:hover { border-color:var(--border-bright); box-shadow:0 4px 40px rgba(0,0,0,.3); }
-.card-title { font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
-.card-subtitle { font-family:var(--font-display); font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); margin-bottom:18px; }
-
-.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:28px; }
-.stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; transition:all .3s; }
-.stat-card:hover { border-color:var(--border-bright); transform:translateY(-2px); }
-.stat-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px; }
-.stat-value { font-family:var(--font-display); font-size:28px; font-weight:900; color:var(--gold); }
-.stat-detail { font-size:11px; color:var(--text-dim); margin-top:4px; }
-
-.ball { display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:50%; font-family:var(--font-mono); font-weight:700; font-size:15px; background:linear-gradient(145deg,#2a2a3a,#1a1a28); color:var(--text-primary); border:2px solid rgba(255,215,0,.3); box-shadow:0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05); animation:ballPop .5s ease-out both; }
-.ball.sp { background:linear-gradient(145deg,#3d1522,#2a0d18); border-color:var(--red); color:var(--red); box-shadow:0 2px 8px rgba(0,0,0,.4),0 0 15px var(--red-glow); }
-.ball-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.ball-plus { color:var(--text-dim); font-size:16px; margin:0 4px; }
-
-.rtable { width:100%; border-collapse:collapse; }
-.rtable th { font-family:var(--font-display); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); padding:12px 8px; text-align:left; border-bottom:1px solid var(--border); }
-.rtable td { padding:14px 8px; border-bottom:1px solid rgba(255,255,255,.03); vertical-align:middle; }
-.rtable tbody tr { animation:slideIn .4s ease-out both; transition:background .2s; }
-.rtable tr:hover { background:rgba(255,215,0,.02); }
-.draw-id { font-family:var(--font-mono); font-size:13px; color:var(--gold-dim); font-weight:700; }
-.draw-date { font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
-
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-@media(max-width:768px) { .grid-2{grid-template-columns:1fr} .ball{width:36px;height:36px;font-size:13px} .stats-row{grid-template-columns:repeat(2,1fr)} }
-
-.heatmap-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
-.hm-cell { aspect-ratio:1; border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:14px; font-weight:700; transition:all .3s; cursor:default; }
-.hm-cell:hover { transform:scale(1.1); z-index:2; }
-.hm-freq { font-size:9px; font-weight:400; opacity:.7; margin-top:2px; }
-
-.hc-item { display:flex; align-items:center; gap:10px; margin-bottom:8px; animation:slideIn .3s ease-out both; }
-.hc-num { font-family:var(--font-mono); font-weight:700; width:30px; text-align:center; font-size:14px; }
-.hc-bar-bg { flex:1; height:24px; background:rgba(255,255,255,.03); border-radius:4px; overflow:hidden; }
-.hc-bar { height:100%; border-radius:4px; transition:width .8s ease-out; display:flex; align-items:center; padding-left:8px; font-size:11px; font-family:var(--font-mono); font-weight:700; min-width:30px; }
-
-.pred-model { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:16px; position:relative; overflow:hidden; }
-.pred-model .top-line { position:absolute; top:0; left:0; right:0; height:2px; }
-.pred-balls { display:flex; gap:12px; margin:20px 0; flex-wrap:wrap; }
-.pred-bw { text-align:center; }
-.pred-ball { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:20px; margin-bottom:6px; animation:float 3s ease-in-out infinite; }
-.pred-ball.t0 { background:linear-gradient(145deg,#4a1020,#2a0815); border:2px solid var(--red); color:var(--red); box-shadow:0 0 20px var(--red-glow); }
-.pred-ball.t1 { background:linear-gradient(145deg,#0a2a3a,#051825); border:2px solid var(--cyan); color:var(--cyan); box-shadow:0 0 20px var(--cyan-glow); }
-.pred-ball.t2 { background:linear-gradient(145deg,#0a3a1a,#052510); border:2px solid var(--green); color:var(--green); box-shadow:0 0 20px rgba(0,230,118,.2); }
-.conf-text { font-family:var(--font-mono); font-size:10px; color:var(--text-secondary); }
-.badge { display:inline-block; font-family:var(--font-display); font-size:9px; letter-spacing:2px; text-transform:uppercase; padding:4px 12px; border-radius:20px; margin-bottom:8px; }
-.badge.b0 { background:var(--red-glow); color:var(--red); border:1px solid rgba(255,61,90,.3); }
-.badge.b1 { background:var(--cyan-glow); color:var(--cyan); border:1px solid rgba(0,229,255,.3); }
-.badge.b2 { background:rgba(0,230,118,.1); color:var(--green); border:1px solid rgba(0,230,118,.3); }
-.conf-bar-bg { width:100%; height:6px; background:rgba(255,255,255,.05); border-radius:3px; margin-top:12px; overflow:hidden; }
-.conf-bar { height:100%; border-radius:3px; transition:width 1s ease-out; }
-.expl-list { margin-top:16px; }
-.expl-item { font-size:12px; color:var(--text-secondary); padding:6px 0; border-bottom:1px solid rgba(255,255,255,.03); display:flex; gap:8px; align-items:flex-start; }
-.expl-num { font-family:var(--font-mono); font-weight:700; min-width:24px; color:var(--gold); }
-.toggle-btn { background:rgba(255,215,0,.08); border:1px solid rgba(255,215,0,.2); color:var(--gold); padding:8px 20px; border-radius:6px; font-family:var(--font-body); font-size:13px; cursor:pointer; transition:all .3s; }
-.toggle-btn:hover { background:rgba(255,215,0,.15); border-color:var(--gold); }
-.chart-box { position:relative; width:100%; height:300px; }
-.disclaimer { text-align:center; padding:30px 20px; font-size:12px; color:var(--text-dim); border-top:1px solid var(--border); margin-top:40px; }
-.section { position:absolute; left:-9999px; visibility:hidden; width:100%; }
-.section.active { position:relative; left:auto; visibility:visible; }
-::-webkit-scrollbar { width:6px; height:6px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(255,215,0,.1); border-radius:3px; }
+:root{--bg-deep:#06080d;--bg-card:#0c1018;--bg-glass:rgba(12,16,24,.92);--border:rgba(255,215,0,.08);--border-bright:rgba(255,215,0,.2);--gold:#ffd700;--gold-dim:#c9a84c;--gold-glow:rgba(255,215,0,.15);--red:#ff3d5a;--red-glow:rgba(255,61,90,.2);--cyan:#00e5ff;--cyan-glow:rgba(0,229,255,.15);--green:#00e676;--text-primary:#f0ece4;--text-secondary:#8a8578;--text-dim:#4a463e;--font-display:'Orbitron',sans-serif;--font-body:'Noto Sans TC',sans-serif;--font-mono:'JetBrains Mono',monospace;--radius:12px;--radius-sm:6px}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--bg-deep);color:var(--text-primary);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(255,215,0,.03) 0%,transparent 70%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(0,229,255,.02) 0%,transparent 60%)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes ballPop{0%{transform:scale(0) rotate(-180deg);opacity:0}60%{transform:scale(1.12) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+.anim-up{animation:fadeUp .55s ease-out both}
+.container{max-width:1280px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+.header{padding:40px 0 20px;text-align:center}
+.header-crown{font-size:36px;display:block;margin-bottom:8px;filter:drop-shadow(0 0 20px rgba(255,215,0,.4))}
+.header h1{font-family:var(--font-display);font-size:clamp(28px,5vw,48px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--gold),#fff8dc,var(--gold));background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s ease-in-out infinite}
+.header-sub{font-family:var(--font-display);font-size:11px;letter-spacing:6px;text-transform:uppercase;color:var(--text-secondary)}
+.header-meta{display:flex;justify-content:center;gap:24px;margin-top:14px;flex-wrap:wrap}
+.header-meta span{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);font-family:var(--font-mono)}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.nav{position:sticky;top:0;z-index:100;background:var(--bg-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);margin-bottom:32px}
+.nav-inner{display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;padding:14px 20px;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;position:relative;transition:color .3s}
+.nav-btn:hover{color:var(--text-primary)}
+.nav-btn.active{color:var(--gold)}
+.nav-btn.active::after{content:'';position:absolute;bottom:0;left:20px;right:20px;height:2px;background:var(--gold);box-shadow:0 0 10px var(--gold-glow)}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;transition:border-color .3s,box-shadow .3s}
+.card:hover{border-color:var(--border-bright);box-shadow:0 4px 40px rgba(0,0,0,.3)}
+.card-title{font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.card-subtitle{font-family:var(--font-display);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:18px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:all .3s}
+.stat-card:hover{border-color:var(--border-bright);transform:translateY(-2px)}
+.stat-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-secondary);margin-bottom:8px}
+.stat-value{font-family:var(--font-display);font-size:28px;font-weight:900;color:var(--gold)}
+.stat-detail{font-size:11px;color:var(--text-dim);margin-top:4px}
+.ball{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;font-family:var(--font-mono);font-weight:700;font-size:15px;background:linear-gradient(145deg,#2a2a3a,#1a1a28);color:var(--text-primary);border:2px solid rgba(255,215,0,.3);box-shadow:0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05);animation:ballPop .5s ease-out both}
+.ball.sp{background:linear-gradient(145deg,#3d1522,#2a0d18);border-color:var(--red);color:var(--red);box-shadow:0 2px 8px rgba(0,0,0,.4),0 0 15px var(--red-glow)}
+.ball-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ball-plus{color:var(--text-dim);font-size:16px;margin:0 4px}
+.rtable{width:100%;border-collapse:collapse}
+.rtable th{font-family:var(--font-display);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-secondary);padding:12px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.rtable td{padding:14px 8px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+.rtable tbody tr{animation:slideIn .4s ease-out both;transition:background .2s}
+.rtable tr:hover{background:rgba(255,215,0,.02)}
+.draw-id{font-family:var(--font-mono);font-size:13px;color:var(--gold-dim);font-weight:700}
+.draw-date{font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}.ball{width:36px;height:36px;font-size:13px}.stats-row{grid-template-columns:repeat(2,1fr)}}
+.heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.hm-cell{aspect-ratio:1;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;font-weight:700;transition:all .3s;cursor:default}
+.hm-cell:hover{transform:scale(1.1);z-index:2}
+.hm-freq{font-size:9px;font-weight:400;opacity:.7;margin-top:2px}
+.hc-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;animation:slideIn .3s ease-out both}
+.hc-num{font-family:var(--font-mono);font-weight:700;width:30px;text-align:center;font-size:14px}
+.hc-bar-bg{flex:1;height:24px;background:rgba(255,255,255,.03);border-radius:4px;overflow:hidden}
+.hc-bar{height:100%;border-radius:4px;transition:width .8s ease-out;display:flex;align-items:center;padding-left:8px;font-size:11px;font-family:var(--font-mono);font-weight:700;min-width:30px}
+.pred-model{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+.pred-model .top-line{position:absolute;top:0;left:0;right:0;height:2px}
+.pred-balls{display:flex;gap:12px;margin:20px 0;flex-wrap:wrap}
+.pred-bw{text-align:center}
+.pred-ball{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:20px;margin-bottom:6px;animation:float 3s ease-in-out infinite}
+.pred-ball.t0{background:linear-gradient(145deg,#4a1020,#2a0815);border:2px solid var(--red);color:var(--red);box-shadow:0 0 20px var(--red-glow)}
+.pred-ball.t1{background:linear-gradient(145deg,#0a2a3a,#051825);border:2px solid var(--cyan);color:var(--cyan);box-shadow:0 0 20px var(--cyan-glow)}
+.pred-ball.t2{background:linear-gradient(145deg,#0a3a1a,#052510);border:2px solid var(--green);color:var(--green);box-shadow:0 0 20px rgba(0,230,118,.2)}
+.conf-text{font-family:var(--font-mono);font-size:10px;color:var(--text-secondary)}
+.badge{display:inline-block;font-family:var(--font-display);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:8px}
+.badge.b0{background:var(--red-glow);color:var(--red);border:1px solid rgba(255,61,90,.3)}
+.badge.b1{background:var(--cyan-glow);color:var(--cyan);border:1px solid rgba(0,229,255,.3)}
+.badge.b2{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.conf-bar-bg{width:100%;height:6px;background:rgba(255,255,255,.05);border-radius:3px;margin-top:12px;overflow:hidden}
+.conf-bar{height:100%;border-radius:3px;transition:width 1s ease-out}
+.expl-list{margin-top:16px}
+.expl-item{font-size:12px;color:var(--text-secondary);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);display:flex;gap:8px;align-items:flex-start}
+.expl-num{font-family:var(--font-mono);font-weight:700;min-width:24px;color:var(--gold)}
+.toggle-btn{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);color:var(--gold);padding:8px 20px;border-radius:6px;font-family:var(--font-body);font-size:13px;cursor:pointer;transition:all .3s}
+.toggle-btn:hover{background:rgba(255,215,0,.15);border-color:var(--gold)}
+.chart-box{position:relative;width:100%;height:300px}
+.section-divider{margin:48px 0 32px;border:0;border-top:1px solid var(--border)}
+.disclaimer{text-align:center;padding:30px 20px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);margin-top:40px}
+.sec-anchor{scroll-margin-top:60px}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,215,0,.1);border-radius:3px}
 </style>
 </head>
 <body>
 
 <div class="container">
   <div class="header anim-up">
-    <span class="header-crown">♛</span>
+    <span class="header-crown">&#9819;</span>
     <h1>MARK SIX</h1>
-    <div class="header-sub">Number Analysis & Intelligence System</div>
+    <div class="header-sub">Number Analysis &amp; Intelligence System</div>
     <div class="header-meta">
       <span><span class="dot-live"></span> 資料已同步</span>
       <span id="meta-draws"></span>
@@ -151,118 +111,124 @@ body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index
 
 <div class="nav"><div class="container"><div class="nav-inner" id="nav"></div></div></div>
 
-<div class="container" id="content">
-  <div class="section active" id="sec-overview">
-    <div class="card anim-up" id="latest-draw" style="background:linear-gradient(135deg,#0c1018,#111825);border-color:rgba(255,215,0,.15)"></div>
-    <div class="stats-row" id="stats-row"></div>
-    <div class="card anim-up">
-      <div class="card-title">近 10 期開獎記錄</div>
-      <div class="card-subtitle">Recent 10 Draws</div>
-      <div style="overflow-x:auto"><table class="rtable" id="results-table"><thead><tr><th>期數</th><th>日期</th><th>號碼</th><th>特別號</th></tr></thead><tbody></tbody></table></div>
-    </div>
+<div class="container">
+
+  <!-- OVERVIEW -->
+  <div id="sec-overview" class="sec-anchor"></div>
+  <div class="card anim-up" id="latest-draw" style="background:linear-gradient(135deg,#0c1018,#111825);border-color:rgba(255,215,0,.15)"></div>
+  <div class="stats-row" id="stats-row"></div>
+  <div class="card anim-up">
+    <div class="card-title">近 10 期開獎記錄</div>
+    <div class="card-subtitle">Recent 10 Draws</div>
+    <div style="overflow-x:auto"><table class="rtable" id="results-table"><thead><tr><th>期數</th><th>日期</th><th>號碼</th><th>特別號</th></tr></thead><tbody></tbody></table></div>
   </div>
-  <div class="section" id="sec-results">
-    <div class="card anim-up">
-      <div class="card-title">近 10 期開獎記錄</div>
-      <div class="card-subtitle">Recent 10 Draws · Full View</div>
-      <div style="overflow-x:auto"><table class="rtable" id="results-table-2"><thead><tr><th>期數</th><th>日期</th><th>號碼</th><th>特別號</th></tr></thead><tbody></tbody></table></div>
-    </div>
+
+  <hr class="section-divider">
+
+  <!-- FREQUENCY -->
+  <div id="sec-frequency" class="sec-anchor"></div>
+  <div class="card">
+    <div class="card-title">號碼出現頻率</div>
+    <div class="card-subtitle" id="freq-sub">Frequency Analysis</div>
+    <div class="chart-box"><canvas id="freqChart"></canvas></div>
   </div>
-  <div class="section" id="sec-frequency">
-    <div class="card anim-up">
-      <div class="card-title">號碼出現頻率</div>
-      <div class="card-subtitle" id="freq-sub">Frequency Analysis</div>
-      <div class="chart-box"><canvas id="freqChart"></canvas></div>
-    </div>
+
+  <hr class="section-divider">
+
+  <!-- DISTRIBUTION -->
+  <div id="sec-distribution" class="sec-anchor"></div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">奇偶分布</div><div class="card-subtitle">Odd · Even Distribution</div><div class="chart-box" style="height:280px"><canvas id="oddEvenChart"></canvas></div></div>
+    <div class="card"><div class="card-title">大小分布</div><div class="card-subtitle">Low(1-24) · High(25-49)</div><div class="chart-box" style="height:280px"><canvas id="highLowChart"></canvas></div></div>
   </div>
-  <div class="section" id="sec-distribution">
-    <div class="grid-2">
-      <div class="card anim-up"><div class="card-title">奇偶分布</div><div class="card-subtitle">Odd · Even Distribution</div><div class="chart-box" style="height:280px"><canvas id="oddEvenChart"></canvas></div></div>
-      <div class="card anim-up"><div class="card-title">大小分布</div><div class="card-subtitle">Low(1-24) · High(25-49)</div><div class="chart-box" style="height:280px"><canvas id="highLowChart"></canvas></div></div>
-    </div>
-    <div class="card anim-up" style="margin-top:20px"><div class="card-title">近 20 期出現次數 Top 12</div><div class="card-subtitle">Recent 20 Draws · Top 12</div><div class="chart-box" style="height:360px"><canvas id="recent20Chart"></canvas></div></div>
+  <div class="card" style="margin-top:20px"><div class="card-title">近 20 期出現次數 Top 12</div><div class="card-subtitle">Recent 20 Draws · Top 12</div><div class="chart-box" style="height:360px"><canvas id="recent20Chart"></canvas></div></div>
+
+  <hr class="section-divider">
+
+  <!-- HEATMAP -->
+  <div id="sec-heatmap" class="sec-anchor"></div>
+  <div class="card"><div class="card-title">熱力圖 1 – 49</div><div class="card-subtitle">Frequency Heatmap</div><div class="heatmap-grid" id="heatmap"></div>
+  <div style="display:flex;justify-content:center;gap:16px;margin-top:16px;font-size:10px;color:var(--text-dim)">
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,61,90,.5)"></span> 極熱</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,215,0,.25)"></span> 偏熱</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(0,229,255,.1)"></span> 偏冷</span>
+  </div></div>
+
+  <hr class="section-divider">
+
+  <!-- HOT/COLD -->
+  <div id="sec-hotcold" class="sec-anchor"></div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">🔥 熱門號碼 Top 10</div><div class="card-subtitle">Most Frequent · Recent 20 Draws</div><div id="hot-list"></div></div>
+    <div class="card"><div class="card-title">❄️ 冷門號碼 Top 10</div><div class="card-subtitle">Least Frequent · Recent 20 Draws</div><div id="cold-list"></div></div>
   </div>
-  <div class="section" id="sec-heatmap">
-    <div class="card anim-up"><div class="card-title">熱力圖 1 – 49</div><div class="card-subtitle">Frequency Heatmap</div><div class="heatmap-grid" id="heatmap"></div>
-    <div style="display:flex;justify-content:center;gap:16px;margin-top:16px;font-size:10px;color:var(--text-dim)">
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,61,90,.5)"></span> 極熱</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,215,0,.25)"></span> 偏熱</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(0,229,255,.1)"></span> 偏冷</span>
-    </div></div>
+
+  <hr class="section-divider">
+
+  <!-- PREDICT -->
+  <div id="sec-predict" class="sec-anchor"></div>
+  <div class="card" style="background:linear-gradient(135deg,rgba(255,215,0,.03),rgba(0,229,255,.02));border-color:rgba(255,215,0,.15);text-align:center;margin-bottom:24px">
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:var(--gold);margin-bottom:8px">預測號碼 · 下一期</div>
+    <div style="font-size:13px;color:var(--text-secondary)" id="pred-intro"></div>
   </div>
-  <div class="section" id="sec-hotcold">
-    <div class="grid-2">
-      <div class="card anim-up"><div class="card-title">🔥 熱門號碼 Top 10</div><div class="card-subtitle">Most Frequent · Recent 20 Draws</div><div id="hot-list"></div></div>
-      <div class="card anim-up"><div class="card-title">❄️ 冷門號碼 Top 10</div><div class="card-subtitle">Least Frequent · Recent 20 Draws</div><div id="cold-list"></div></div>
-    </div>
-  </div>
-  <div class="section" id="sec-predict">
-    <div class="card anim-up" style="background:linear-gradient(135deg,rgba(255,215,0,.03),rgba(0,229,255,.02));border-color:rgba(255,215,0,.15);text-align:center;margin-bottom:24px">
-      <div style="font-family:var(--font-display);font-size:20px;font-weight:900;color:var(--gold);margin-bottom:8px">預測號碼 · 下一期</div>
-      <div style="font-size:13px;color:var(--text-secondary)" id="pred-intro"></div>
-    </div>
-    <div id="predictions"></div>
-    <div style="text-align:center;padding:20px;font-size:12px;color:var(--text-dim);background:rgba(255,61,90,.03);border-radius:var(--radius);border:1px solid rgba(255,61,90,.1);margin-top:16px" id="disclaimer-box"></div>
-  </div>
+  <div id="predictions"></div>
+  <div style="text-align:center;padding:20px;font-size:12px;color:var(--text-dim);background:rgba(255,61,90,.03);border-radius:var(--radius);border:1px solid rgba(255,61,90,.1);margin-top:16px" id="disclaimer-box"></div>
+
 </div>
 
 <div class="disclaimer">⚠️ 六合彩為隨機抽獎，任何統計預測均不保證中獎 · 本系統僅供娛樂參考 · 請理性投注 · 未成年人士請勿購彩</div>
 
 <script>
-/* ========== DATA ========== */
 var DATA={"meta":{"total_draws":1768,"date_range":"2013-01-03 ~ 2026-03-21","last_updated":"2026-03-22","data_source":"Hong Kong Mark Six (六合彩) via lottery.hk"},"recent_10":[{"draw_id":"26/022","draw_date":"2026-02-26","day_of_week":"Thursday","numbers":[6,13,15,19,38,42],"special_number":34},{"draw_id":"26/023","draw_date":"2026-02-28","day_of_week":"Saturday","numbers":[5,15,37,39,46,47],"special_number":29},{"draw_id":"26/024","draw_date":"2026-03-03","day_of_week":"Tuesday","numbers":[6,13,20,31,32,44],"special_number":45},{"draw_id":"26/025","draw_date":"2026-03-05","day_of_week":"Thursday","numbers":[4,18,24,31,42,46],"special_number":11},{"draw_id":"26/026","draw_date":"2026-03-07","day_of_week":"Saturday","numbers":[12,15,18,22,28,37],"special_number":31},{"draw_id":"26/027","draw_date":"2026-03-10","day_of_week":"Tuesday","numbers":[2,16,25,34,35,37],"special_number":49},{"draw_id":"26/028","draw_date":"2026-03-12","day_of_week":"Thursday","numbers":[7,13,14,16,26,30],"special_number":34},{"draw_id":"26/029","draw_date":"2026-03-17","day_of_week":"Tuesday","numbers":[16,18,22,28,45,49],"special_number":13},{"draw_id":"26/030","draw_date":"2026-03-19","day_of_week":"Thursday","numbers":[2,6,8,33,41,45],"special_number":48},{"draw_id":"26/031","draw_date":"2026-03-21","day_of_week":"Saturday","numbers":[5,9,11,18,23,47],"special_number":24}],"recent_20":[{"draw_id":"26/012","draw_date":"2026-01-29","day_of_week":"Thursday","numbers":[6,9,12,14,35,44],"special_number":11},{"draw_id":"26/013","draw_date":"2026-01-31","day_of_week":"Saturday","numbers":[25,30,32,35,36,47],"special_number":46},{"draw_id":"26/014","draw_date":"2026-02-03","day_of_week":"Tuesday","numbers":[12,23,27,37,39,42],"special_number":5},{"draw_id":"26/015","draw_date":"2026-02-05","day_of_week":"Thursday","numbers":[1,9,17,24,35,36],"special_number":42},{"draw_id":"26/016","draw_date":"2026-02-07","day_of_week":"Saturday","numbers":[12,22,28,32,37,44],"special_number":20},{"draw_id":"26/017","draw_date":"2026-02-10","day_of_week":"Tuesday","numbers":[3,4,14,18,26,39],"special_number":40},{"draw_id":"26/018","draw_date":"2026-02-12","day_of_week":"Thursday","numbers":[2,3,14,25,37,46],"special_number":10},{"draw_id":"26/019","draw_date":"2026-02-15","day_of_week":"Sunday","numbers":[8,28,33,36,37,46],"special_number":4},{"draw_id":"26/020","draw_date":"2026-02-21","day_of_week":"Saturday","numbers":[2,18,34,35,37,49],"special_number":33},{"draw_id":"26/021","draw_date":"2026-02-24","day_of_week":"Tuesday","numbers":[2,3,4,10,13,23],"special_number":12},{"draw_id":"26/022","draw_date":"2026-02-26","day_of_week":"Thursday","numbers":[6,13,15,19,38,42],"special_number":34},{"draw_id":"26/023","draw_date":"2026-02-28","day_of_week":"Saturday","numbers":[5,15,37,39,46,47],"special_number":29},{"draw_id":"26/024","draw_date":"2026-03-03","day_of_week":"Tuesday","numbers":[6,13,20,31,32,44],"special_number":45},{"draw_id":"26/025","draw_date":"2026-03-05","day_of_week":"Thursday","numbers":[4,18,24,31,42,46],"special_number":11},{"draw_id":"26/026","draw_date":"2026-03-07","day_of_week":"Saturday","numbers":[12,15,18,22,28,37],"special_number":31},{"draw_id":"26/027","draw_date":"2026-03-10","day_of_week":"Tuesday","numbers":[2,16,25,34,35,37],"special_number":49},{"draw_id":"26/028","draw_date":"2026-03-12","day_of_week":"Thursday","numbers":[7,13,14,16,26,30],"special_number":34},{"draw_id":"26/029","draw_date":"2026-03-17","day_of_week":"Tuesday","numbers":[16,18,22,28,45,49],"special_number":13},{"draw_id":"26/030","draw_date":"2026-03-19","day_of_week":"Thursday","numbers":[2,6,8,33,41,45],"special_number":48},{"draw_id":"26/031","draw_date":"2026-03-21","day_of_week":"Saturday","numbers":[5,9,11,18,23,47],"special_number":24}],"stats":{"frequency":{"1":222,"2":222,"3":217,"4":219,"5":188,"6":209,"7":208,"8":215,"9":207,"10":200,"11":215,"12":237,"13":216,"14":215,"15":217,"16":224,"17":209,"18":237,"19":207,"20":229,"21":230,"22":219,"23":207,"24":242,"25":215,"26":204,"27":210,"28":240,"29":218,"30":246,"31":204,"32":249,"33":226,"34":234,"35":232,"36":213,"37":202,"38":213,"39":202,"40":198,"41":180,"42":201,"43":197,"44":233,"45":216,"46":224,"47":207,"48":195,"49":238},"odd_even":{"odd":5290,"even":5318},"high_low":{"low":5211,"high":5397},"hot_cold_20":[{"number":37,"count":8},{"number":18,"count":6},{"number":2,"count":5},{"number":35,"count":5},{"number":6,"count":4},{"number":12,"count":4},{"number":13,"count":4},{"number":14,"count":4},{"number":28,"count":4},{"number":46,"count":4},{"number":3,"count":3},{"number":4,"count":3},{"number":9,"count":3},{"number":15,"count":3},{"number":16,"count":3},{"number":22,"count":3},{"number":23,"count":3},{"number":25,"count":3},{"number":32,"count":3},{"number":36,"count":3},{"number":39,"count":3},{"number":42,"count":3},{"number":44,"count":3},{"number":47,"count":3},{"number":5,"count":2},{"number":8,"count":2},{"number":24,"count":2},{"number":26,"count":2},{"number":30,"count":2},{"number":31,"count":2},{"number":33,"count":2},{"number":34,"count":2},{"number":45,"count":2},{"number":49,"count":2},{"number":1,"count":1},{"number":7,"count":1},{"number":10,"count":1},{"number":11,"count":1},{"number":17,"count":1},{"number":19,"count":1},{"number":20,"count":1},{"number":27,"count":1},{"number":38,"count":1},{"number":41,"count":1},{"number":21,"count":0},{"number":29,"count":0},{"number":40,"count":0},{"number":43,"count":0},{"number":48,"count":0}],"heatmap":[{"number":1,"frequency":222,"intensity":0.892},{"number":2,"frequency":222,"intensity":0.892},{"number":3,"frequency":217,"intensity":0.871},{"number":4,"frequency":219,"intensity":0.88},{"number":5,"frequency":188,"intensity":0.755},{"number":6,"frequency":209,"intensity":0.839},{"number":7,"frequency":208,"intensity":0.835},{"number":8,"frequency":215,"intensity":0.863},{"number":9,"frequency":207,"intensity":0.831},{"number":10,"frequency":200,"intensity":0.803},{"number":11,"frequency":215,"intensity":0.863},{"number":12,"frequency":237,"intensity":0.952},{"number":13,"frequency":216,"intensity":0.867},{"number":14,"frequency":215,"intensity":0.863},{"number":15,"frequency":217,"intensity":0.871},{"number":16,"frequency":224,"intensity":0.9},{"number":17,"frequency":209,"intensity":0.839},{"number":18,"frequency":237,"intensity":0.952},{"number":19,"frequency":207,"intensity":0.831},{"number":20,"frequency":229,"intensity":0.92},{"number":21,"frequency":230,"intensity":0.924},{"number":22,"frequency":219,"intensity":0.88},{"number":23,"frequency":207,"intensity":0.831},{"number":24,"frequency":242,"intensity":0.972},{"number":25,"frequency":215,"intensity":0.863},{"number":26,"frequency":204,"intensity":0.819},{"number":27,"frequency":210,"intensity":0.843},{"number":28,"frequency":240,"intensity":0.964},{"number":29,"frequency":218,"intensity":0.876},{"number":30,"frequency":246,"intensity":0.988},{"number":31,"frequency":204,"intensity":0.819},{"number":32,"frequency":249,"intensity":1.0},{"number":33,"frequency":226,"intensity":0.908},{"number":34,"frequency":234,"intensity":0.94},{"number":35,"frequency":232,"intensity":0.932},{"number":36,"frequency":213,"intensity":0.855},{"number":37,"frequency":202,"intensity":0.811},{"number":38,"frequency":213,"intensity":0.855},{"number":39,"frequency":202,"intensity":0.811},{"number":40,"frequency":198,"intensity":0.795},{"number":41,"frequency":180,"intensity":0.723},{"number":42,"frequency":201,"intensity":0.807},{"number":43,"frequency":197,"intensity":0.791},{"number":44,"frequency":233,"intensity":0.936},{"number":45,"frequency":216,"intensity":0.867},{"number":46,"frequency":224,"intensity":0.9},{"number":47,"frequency":207,"intensity":0.831},{"number":48,"frequency":195,"intensity":0.783},{"number":49,"frequency":238,"intensity":0.956}]},"predictions":{"models":[{"model":"頻率加權模型 (Hot/Cold Frequency)","model_id":"frequency_weighted","description":"基於歷史頻率分類，選取3個熱號 + 2個中間號 + 1個冷號","numbers":[2,13,18,28,35,37],"confidence":{"2":0.6,"13":0.56,"18":0.8,"28":0.7,"35":0.75,"37":0.54},"explanations":{"2":"分類：中間 (Medium)｜歷史出現 222 次 (12.6%)｜近20期出現 5 次","13":"分類：中間 (Medium)｜歷史出現 216 次 (12.2%)｜近20期出現 4 次","18":"分類：熱號 (Hot)｜歷史出現 237 次 (13.4%)｜近20期出現 6 次","28":"分類：熱號 (Hot)｜歷史出現 240 次 (13.6%)｜近20期出現 4 次","35":"分類：熱號 (Hot)｜歷史出現 232 次 (13.1%)｜近20期出現 5 次","37":"分類：冷號 (Cold)｜歷史出現 202 次 (11.4%)｜近20期出現 8 次"},"avg_confidence":0.66},{"model":"近期趨勢模型 (Recent Trend)","model_id":"trend","description":"分析最近20期趨勢，使用指數加權平均，偏好上升趨勢號碼","numbers":[6,13,15,16,18,45],"confidence":{"6":0.52,"13":0.52,"15":0.53,"16":0.55,"18":0.57,"45":0.51},"explanations":{"6":"趨勢：上升 ↑｜前10期出現 1 次 → 後10期出現 3 次｜加權分數 2.37","13":"趨勢：上升 ↑｜前10期出現 1 次 → 後10期出現 3 次｜加權分數 2.41","15":"趨勢：上升 ↑｜前10期出現 0 次 → 後10期出現 3 次｜加權分數 2.52","16":"趨勢：上升 ↑｜前10期出現 0 次 → 後10期出現 3 次｜加權分數 3.06","18":"趨勢：上升 ↑｜前10期出現 2 次 → 後10期出現 4 次｜加權分數 3.49","45":"趨勢：上升 ↑｜前10期出現 0 次 → 後10期出現 2 次｜加權分數 2.21"},"avg_confidence":0.53},{"model":"集成學習模型 (ML Ensemble)","model_id":"ml_ensemble","description":"結合歷史頻率、近期趨勢、間隔分析與奇偶平衡的多特徵集成模型","numbers":[1,17,27,28,37,40],"confidence":{"1":0.88,"17":0.88,"27":0.88,"28":0.88,"37":0.88,"40":0.88},"explanations":{"1":"歷史頻率 12.6%｜近50期出現 5 次｜間隔 16 期｜綜合分數 0.256","17":"歷史頻率 11.8%｜近50期出現 7 次｜間隔 16 期｜綜合分數 0.264","27":"歷史頻率 11.9%｜近50期出現 4 次｜間隔 17 期｜綜合分數 0.248","28":"歷史頻率 13.6%｜近50期出現 15 次｜間隔 2 期｜綜合分數 0.251","37":"歷史頻率 11.4%｜近50期出現 14 次｜間隔 4 期｜綜合分數 0.247","40":"歷史頻率 11.2%｜近50期出現 4 次｜間隔 28 期｜綜合分數 0.246"},"avg_confidence":0.88}],"disclaimer":"⚠️ 六合彩為隨機抽獎，任何統計預測均不保證中獎。本系統僅供娛樂參考。"}};
 
-/* ========== HELPERS ========== */
 function makeBall(n,sp){var d=document.createElement('span');d.className='ball'+(sp?' sp':'');d.textContent=n;return d;}
 function makeBallRow(nums,special){var w=document.createElement('div');w.className='ball-row';nums.forEach(function(n,i){var b=makeBall(n,false);b.style.animationDelay=(i*.08)+'s';w.appendChild(b);});if(special!=null){var p=document.createElement('span');p.className='ball-plus';p.textContent='+';w.appendChild(p);var s=makeBall(special,true);s.style.animationDelay='.5s';w.appendChild(s);}return w;}
 
-/* ========== NAV ========== */
-var SECTIONS=[{id:'overview',label:'總覽'},{id:'results',label:'開獎記錄'},{id:'frequency',label:'頻率分析'},{id:'distribution',label:'分布統計'},{id:'heatmap',label:'熱力圖'},{id:'hotcold',label:'熱冷分析'},{id:'predict',label:'AI 預測'}];
-var currentSection='overview';
-var chartInstances={};
+/* NAV - scroll to anchors */
+var SECTIONS=[{id:'overview',label:'總覽'},{id:'frequency',label:'頻率分析'},{id:'distribution',label:'分布統計'},{id:'heatmap',label:'熱力圖'},{id:'hotcold',label:'熱冷分析'},{id:'predict',label:'AI 預測'}];
+(function(){var nav=document.getElementById('nav');SECTIONS.forEach(function(s,i){var b=document.createElement('button');b.className='nav-btn'+(i===0?' active':'');b.textContent=s.label;b.dataset.id=s.id;b.onclick=function(){document.getElementById('sec-'+s.id).scrollIntoView({behavior:'smooth'});document.querySelectorAll('.nav-btn').forEach(function(x){x.classList.remove('active');});b.classList.add('active');};nav.appendChild(b);});})();
 
-function switchSection(id){
-  currentSection=id;
-  SECTIONS.forEach(function(s){var el=document.getElementById('sec-'+s.id);if(el)el.classList.toggle('active',s.id===id);});
-  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.toggle('active',b.dataset.id===id);});
-  if(id==='frequency'&&chartInstances.freq)chartInstances.freq.resize();
-  if(id==='distribution'){if(chartInstances.oddEven)chartInstances.oddEven.resize();if(chartInstances.highLow)chartInstances.highLow.resize();if(chartInstances.recent20)chartInstances.recent20.resize();}
-}
-(function(){var nav=document.getElementById('nav');SECTIONS.forEach(function(s){var b=document.createElement('button');b.className='nav-btn'+(s.id===currentSection?' active':'');b.textContent=s.label;b.dataset.id=s.id;b.onclick=function(){switchSection(s.id);};nav.appendChild(b);});})();
-
-/* ========== META ========== */
+/* META */
 document.getElementById('meta-draws').textContent=DATA.meta.total_draws+' 期資料庫';
 document.getElementById('meta-updated').textContent='更新：'+DATA.meta.last_updated;
 
-/* ========== LATEST DRAW ========== */
-(function(){var l=DATA.recent_10[DATA.recent_10.length-1];var p=l.draw_date.split('-');var dow=(l.day_of_week||['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(l.draw_date).getDay()]||'').toUpperCase();var el=document.getElementById('latest-draw');var left=document.createElement('div');left.innerHTML='<div style="font-family:var(--font-display);font-size:10px;letter-spacing:3px;color:var(--text-dim);margin-bottom:6px">LATEST DRAW</div><div style="font-family:var(--font-display);font-size:24px;font-weight:900;color:var(--gold);margin-bottom:4px">#'+l.draw_id+'</div><div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">'+p[0]+' · '+p[1]+' · '+p[2]+' · '+dow+'</div>';var right=makeBallRow(l.numbers,l.special_number);var wrap=document.createElement('div');wrap.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px';wrap.appendChild(left);wrap.appendChild(right);el.appendChild(wrap);})();
+/* LATEST DRAW */
+(function(){var l=DATA.recent_10[DATA.recent_10.length-1];var p=l.draw_date.split('-');var dow=(l.day_of_week||'');var el=document.getElementById('latest-draw');el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px"><div><div style="font-family:var(--font-display);font-size:10px;letter-spacing:3px;color:var(--text-dim);margin-bottom:6px">LATEST DRAW</div><div style="font-family:var(--font-display);font-size:24px;font-weight:900;color:var(--gold);margin-bottom:4px">#'+l.draw_id+'</div><div style="font-family:var(--font-mono);font-size:13px;color:var(--text-secondary)">'+p[0]+' · '+p[1]+' · '+p[2]+(dow?' · '+dow.toUpperCase():'')+'</div></div><div id="latest-balls"></div></div>';document.getElementById('latest-balls').appendChild(makeBallRow(l.numbers,l.special_number));})();
 
-/* ========== STATS ROW ========== */
+/* STATS ROW */
 (function(){var f=DATA.stats.frequency;var e=Object.keys(f).map(function(n){return{num:+n,count:f[n]};});var hot=e.reduce(function(a,b){return a.count>b.count?a:b;});var cold=e.reduce(function(a,b){return a.count<b.count?a:b;});var avg=(e.reduce(function(s,x){return s+x.count;},0)/e.length).toFixed(1);var items=[{l:'總收錄期數',v:DATA.meta.total_draws.toLocaleString(),d:'2013.01 起',c:'var(--gold)'},{l:'最熱號碼',v:hot.num,d:'出現 '+hot.count+' 次',c:'var(--red)'},{l:'最冷號碼',v:cold.num,d:'出現 '+cold.count+' 次',c:'var(--cyan)'},{l:'平均出現',v:avg,d:'每號碼 / '+DATA.meta.total_draws+'期',c:'var(--gold)'}];var row=document.getElementById('stats-row');items.forEach(function(it,i){var c=document.createElement('div');c.className='stat-card anim-up';c.style.animationDelay=(i*.1)+'s';c.innerHTML='<div class="stat-label">'+it.l+'</div><div class="stat-value" style="color:'+it.c+'">'+it.v+'</div><div class="stat-detail">'+it.d+'</div>';row.appendChild(c);});})();
 
-/* ========== RESULTS TABLES ========== */
-function fillTable(tid){var tb=document.querySelector('#'+tid+' tbody');DATA.recent_10.slice().reverse().forEach(function(d,i){var tr=document.createElement('tr');tr.style.animationDelay=(i*.05)+'s';var t1=document.createElement('td');t1.innerHTML='<span class="draw-id">'+d.draw_id+'</span>';var t2=document.createElement('td');t2.innerHTML='<span class="draw-date">'+d.draw_date+'</span>';var t3=document.createElement('td');var br=document.createElement('div');br.className='ball-row';d.numbers.forEach(function(n,j){var b=makeBall(n,false);b.style.animationDelay=(j*.06)+'s';br.appendChild(b);});t3.appendChild(br);var t4=document.createElement('td');t4.appendChild(makeBall(d.special_number,true));tr.appendChild(t1);tr.appendChild(t2);tr.appendChild(t3);tr.appendChild(t4);tb.appendChild(tr);});}
-fillTable('results-table');fillTable('results-table-2');
+/* RESULTS TABLE */
+(function(){var tb=document.querySelector('#results-table tbody');DATA.recent_10.slice().reverse().forEach(function(d,i){var tr=document.createElement('tr');tr.style.animationDelay=(i*.05)+'s';var t1=document.createElement('td');t1.innerHTML='<span class="draw-id">'+d.draw_id+'</span>';var t2=document.createElement('td');t2.innerHTML='<span class="draw-date">'+d.draw_date+'</span>';var t3=document.createElement('td');var br=document.createElement('div');br.className='ball-row';d.numbers.forEach(function(n,j){var b=makeBall(n,false);b.style.animationDelay=(j*.06)+'s';br.appendChild(b);});t3.appendChild(br);var t4=document.createElement('td');t4.appendChild(makeBall(d.special_number,true));tr.appendChild(t1);tr.appendChild(t2);tr.appendChild(t3);tr.appendChild(t4);tb.appendChild(tr);});})();
 
-/* ========== HEATMAP ========== */
+/* HEATMAP */
 (function(){var g=document.getElementById('heatmap');DATA.stats.heatmap.forEach(function(h){var bg,tx,bd;if(h.intensity>=.98){bg='rgba(255,61,90,.5)';tx='#ff3d5a';bd='rgba(255,61,90,.6)';}else if(h.intensity>=.95){bg='rgba(255,140,0,.35)';tx='#ff8c00';bd='rgba(255,140,0,.4)';}else if(h.intensity>=.92){bg='rgba(255,215,0,.25)';tx='#ffd700';bd='rgba(255,215,0,.3)';}else if(h.intensity>=.88){bg='rgba(255,215,0,.12)';tx='#c9a84c';bd='rgba(255,215,0,.15)';}else if(h.intensity>=.85){bg='rgba(0,229,255,.1)';tx='#6ab8c7';bd='rgba(0,229,255,.15)';}else{bg='rgba(0,229,255,.05)';tx='#4a6a70';bd='rgba(0,229,255,.08)';}var c=document.createElement('div');c.className='hm-cell';c.style.cssText='background:'+bg+';color:'+tx+';border:1px solid '+bd;c.title='號碼 '+h.number+': 出現 '+h.frequency+' 次';c.innerHTML=h.number+'<span class="hm-freq">'+h.frequency+'</span>';g.appendChild(c);});})();
 
-/* ========== HOT/COLD ========== */
+/* HOT/COLD */
 (function(){var hot=DATA.stats.hot_cold_20.slice(0,10);var cold=DATA.stats.hot_cold_20.slice().reverse().slice(0,10);var mx=Math.max.apply(null,DATA.stats.hot_cold_20.map(function(d){return d.count;}))||1;function rl(items,cid,col,gs,ge){var el=document.getElementById(cid);items.forEach(function(d,i){var div=document.createElement('div');div.className='hc-item';div.style.animationDelay=(i*.05)+'s';var pct=Math.max(8,(d.count/mx)*100);div.innerHTML='<div class="hc-num" style="color:'+col+'">'+d.number+'</div><div class="hc-bar-bg"><div class="hc-bar" style="width:'+pct+'%;background:linear-gradient(90deg,'+gs+','+ge+');color:'+col+'">'+d.count+'x</div></div>';el.appendChild(div);});}rl(hot,'hot-list','var(--red)','rgba(255,61,90,.6)','rgba(255,61,90,.2)');rl(cold,'cold-list','var(--cyan)','rgba(0,229,255,.5)','rgba(0,229,255,.1)');})();
 
-/* ========== PREDICTIONS ========== */
+/* PREDICTIONS */
 (function(){var ms=DATA.predictions.models;var bc=['var(--red)','var(--cyan)','var(--green)'];var bt=['t0','t1','t2'];var bb=['b0','b1','b2'];var ml=['MODEL 1','MODEL 2','MODEL 3'];document.getElementById('pred-intro').textContent='基於 '+DATA.meta.total_draws+' 期歷史數據的 3 種可解釋AI模型';document.getElementById('disclaimer-box').textContent=DATA.predictions.disclaimer;var ct=document.getElementById('predictions');ms.forEach(function(m,idx){var dv=document.createElement('div');dv.className='pred-model anim-up';dv.style.animationDelay=(idx*.15)+'s';var ln=document.createElement('div');ln.className='top-line';ln.style.background='linear-gradient(90deg,'+bc[idx]+',transparent)';dv.appendChild(ln);var bg=document.createElement('span');bg.className='badge '+bb[idx];bg.textContent=ml[idx];dv.appendChild(bg);var h3=document.createElement('h3');h3.style.cssText='font-size:18px;font-weight:700;margin-bottom:4px';h3.textContent=m.model;dv.appendChild(h3);var ds=document.createElement('p');ds.style.cssText='font-size:13px;color:var(--text-secondary);margin-bottom:0';ds.textContent=m.description;dv.appendChild(ds);var bd=document.createElement('div');bd.className='pred-balls';m.numbers.forEach(function(n,i){var wr=document.createElement('div');wr.className='pred-bw';var bl=document.createElement('div');bl.className='pred-ball '+bt[idx];bl.style.animationDelay=(i*.3)+'s';bl.textContent=n;wr.appendChild(bl);var cf=document.createElement('div');cf.className='conf-text';cf.textContent=Math.round(m.confidence[String(n)]*100)+'%';wr.appendChild(cf);bd.appendChild(wr);});dv.appendChild(bd);var rw=document.createElement('div');rw.style.cssText='display:flex;justify-content:space-between;align-items:center';rw.innerHTML='<span style="font-size:12px;color:var(--text-secondary)">平均信心分數: <strong style="color:'+bc[idx]+'">'+Math.round(m.avg_confidence*100)+'%</strong></span>';var tb=document.createElement('button');tb.className='toggle-btn';tb.textContent='查看分析';rw.appendChild(tb);dv.appendChild(rw);var cbg=document.createElement('div');cbg.className='conf-bar-bg';var cb=document.createElement('div');cb.className='conf-bar';cb.style.cssText='width:'+Math.round(m.avg_confidence*100)+'%;background:'+bc[idx]+';box-shadow:0 0 10px '+bc[idx]+'40';cbg.appendChild(cb);dv.appendChild(cbg);var ed=document.createElement('div');ed.className='expl-list';ed.style.display='none';m.numbers.forEach(function(n){var it=document.createElement('div');it.className='expl-item';it.innerHTML='<span class="expl-num">'+n+'</span><span>'+m.explanations[String(n)]+'</span>';ed.appendChild(it);});dv.appendChild(ed);tb.onclick=function(){var v=ed.style.display!=='none';ed.style.display=v?'none':'block';tb.textContent=v?'查看分析':'隱藏分析';};ct.appendChild(dv);});})();
 
-/* ========== CHARTS ========== */
-Chart.defaults.color='#8a8578';Chart.defaults.borderColor='rgba(255,215,0,0.06)';Chart.defaults.font.family="'JetBrains Mono',monospace";
+/* CHARTS - created directly, all visible on page */
+Chart.defaults.color='#8a8578';
+Chart.defaults.borderColor='rgba(255,215,0,0.06)';
+Chart.defaults.font.family="'JetBrains Mono',monospace";
 
-function renderFreqChart(){if(chartInstances.freq)return;var f=DATA.stats.frequency;var lb=[];var vl=[];for(var i=1;i<=49;i++){lb.push(i);vl.push(f[String(i)]);}var mx=Math.max.apply(null,vl);chartInstances.freq=new Chart(document.getElementById('freqChart'),{type:'bar',data:{labels:lb,datasets:[{data:vl,backgroundColor:vl.map(function(v){var r=v/mx;return r>.95?'rgba(255,61,90,.8)':r>.9?'rgba(255,215,0,.7)':'rgba(255,215,0,.25)';}),borderColor:'rgba(255,215,0,.3)',borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){return '號碼 '+c[0].label;},label:function(c){return '出現 '+c.raw+' 次';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,215,0,.04)'},beginAtZero:true}}}});document.getElementById('freq-sub').textContent='Frequency Analysis · All '+DATA.meta.total_draws+' Draws';}
+(function(){
+var f=DATA.stats.frequency;var lb=[];var vl=[];for(var i=1;i<=49;i++){lb.push(i);vl.push(f[String(i)]);}var mx=Math.max.apply(null,vl);
+new Chart(document.getElementById('freqChart'),{type:'bar',data:{labels:lb,datasets:[{data:vl,backgroundColor:vl.map(function(v){var r=v/mx;return r>.95?'rgba(255,61,90,.8)':r>.9?'rgba(255,215,0,.7)':'rgba(255,215,0,.25)';}),borderColor:'rgba(255,215,0,.3)',borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){return '號碼 '+c[0].label;},label:function(c){return '出現 '+c.raw+' 次';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'rgba(255,215,0,.04)'},beginAtZero:true}}}});
+document.getElementById('freq-sub').textContent='Frequency Analysis · All '+DATA.meta.total_draws+' Draws';
+})();
 
-function renderDistCharts(){if(chartInstances.oddEven)return;chartInstances.oddEven=new Chart(document.getElementById('oddEvenChart'),{type:'doughnut',data:{labels:['奇數 Odd','偶數 Even'],datasets:[{data:[DATA.stats.odd_even.odd,DATA.stats.odd_even.even],backgroundColor:['rgba(255,61,90,.7)','rgba(0,229,255,.7)'],borderColor:'#0c1018',borderWidth:3,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12},usePointStyle:true,pointStyleWidth:12}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(a,b){return a+b;},0);return c.label+': '+c.raw+' ('+((c.raw/t)*100).toFixed(1)+'%)';}}}}}});chartInstances.highLow=new Chart(document.getElementById('highLowChart'),{type:'doughnut',data:{labels:['小 Low (1-24)','大 High (25-49)'],datasets:[{data:[DATA.stats.high_low.low,DATA.stats.high_low.high],backgroundColor:['rgba(255,215,0,.7)','rgba(0,230,118,.7)'],borderColor:'#0c1018',borderWidth:3,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12},usePointStyle:true,pointStyleWidth:12}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(a,b){return a+b;},0);return c.label+': '+c.raw+' ('+((c.raw/t)*100).toFixed(1)+'%)';}}}}}});var t12=DATA.stats.hot_cold_20.slice(0,12);chartInstances.recent20=new Chart(document.getElementById('recent20Chart'),{type:'bar',data:{labels:t12.map(function(d){return d.number;}),datasets:[{data:t12.map(function(d){return d.count;}),backgroundColor:t12.map(function(d,i){return i<3?'rgba(255,61,90,.7)':i<7?'rgba(255,215,0,.5)':'rgba(0,229,255,.4)';}),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){return '號碼 '+c[0].label;},label:function(c){return '近20期出現 '+c.raw+' 次';}}}},scales:{x:{grid:{color:'rgba(255,215,0,.04)'},beginAtZero:true},y:{grid:{display:false}}}}});}
+(function(){
+new Chart(document.getElementById('oddEvenChart'),{type:'doughnut',data:{labels:['奇數 Odd','偶數 Even'],datasets:[{data:[DATA.stats.odd_even.odd,DATA.stats.odd_even.even],backgroundColor:['rgba(255,61,90,.7)','rgba(0,229,255,.7)'],borderColor:'#0c1018',borderWidth:3,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12},usePointStyle:true,pointStyleWidth:12}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(a,b){return a+b;},0);return c.label+': '+c.raw+' ('+((c.raw/t)*100).toFixed(1)+'%)';}}}}}});
 
-/* Init all charts immediately since sections are just offscreen, not display:none */
-renderFreqChart();
-renderDistCharts();
+new Chart(document.getElementById('highLowChart'),{type:'doughnut',data:{labels:['小 Low (1-24)','大 High (25-49)'],datasets:[{data:[DATA.stats.high_low.low,DATA.stats.high_low.high],backgroundColor:['rgba(255,215,0,.7)','rgba(0,230,118,.7)'],borderColor:'#0c1018',borderWidth:3,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:12},usePointStyle:true,pointStyleWidth:12}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(a,b){return a+b;},0);return c.label+': '+c.raw+' ('+((c.raw/t)*100).toFixed(1)+'%)';}}}}}});
+
+var t12=DATA.stats.hot_cold_20.slice(0,12);
+new Chart(document.getElementById('recent20Chart'),{type:'bar',data:{labels:t12.map(function(d){return d.number;}),datasets:[{data:t12.map(function(d){return d.count;}),backgroundColor:t12.map(function(d,i){return i<3?'rgba(255,61,90,.7)':i<7?'rgba(255,215,0,.5)':'rgba(0,229,255,.4)';}),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){return '號碼 '+c[0].label;},label:function(c){return '近20期出現 '+c.raw+' 次';}}}},scales:{x:{grid:{color:'rgba(255,215,0,.04)'},beginAtZero:true},y:{grid:{display:false}}}}});
+})();
 </script>
 </body>
 </html>
