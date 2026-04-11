@@ -24848,5 +24848,19 @@
       45
     ],
     "special_number": 40
+  },
+  {
+    "draw_id": "26/039",
+    "draw_date": "2026-04-11",
+    "day_of_week": "Saturday",
+    "numbers": [
+      11,
+      14,
+      17,
+      28,
+      40,
+      42
+    ],
+    "special_number": 2
   }
 ]
