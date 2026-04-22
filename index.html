@@ -227,27 +227,42 @@ function pickWeighted(w49){
   }
   return nums.sort(function(a,b){return a-b;});
 }
-// Model 0: 頻率加權 — 歷史出現次數高的號碼權重高
-function regen0(){
-  var f=DATA.stats.frequency;var w=[];
-  for(var i=1;i<=49;i++)w.push(f[String(i)]||1);
-  return pickWeighted(w);
-}
-// Model 1: 近期趨勢 — 近20期出現次數高的號碼權重高
-function regen1(){
-  var cnt={};DATA.stats.hot_cold_20.forEach(function(d){cnt[d.number]=d.count;});
-  var w=[];for(var i=1;i<=49;i++)w.push((cnt[i]||0)+1);
-  return pickWeighted(w);
-}
-// Model 2: 集成 — 歷史頻率高 且 近期較少出現（冷中選強）
-function regen2(){
-  var f=DATA.stats.frequency;var cnt={};
-  DATA.stats.hot_cold_20.forEach(function(d){cnt[d.number]=d.count;});
-  var mx=Math.max.apply(null,DATA.stats.hot_cold_20.map(function(d){return d.count;}))||1;
-  var w=[];for(var i=1;i<=49;i++){var freq=f[String(i)]||1;var rec=cnt[i]||0;w.push(freq*(1-rec/mx*0.6));}
-  return pickWeighted(w);
-}
+function regen0(){var f=DATA.stats.frequency;var w=[];for(var i=1;i<=49;i++)w.push(f[String(i)]||1);return pickWeighted(w);}
+function regen1(){var cnt={};DATA.stats.hot_cold_20.forEach(function(d){cnt[d.number]=d.count;});var w=[];for(var i=1;i<=49;i++)w.push((cnt[i]||0)+1);return pickWeighted(w);}
+function regen2(){var f=DATA.stats.frequency;var cnt={};DATA.stats.hot_cold_20.forEach(function(d){cnt[d.number]=d.count;});var mx=Math.max.apply(null,DATA.stats.hot_cold_20.map(function(d){return d.count;}))||1;var w=[];for(var i=1;i<=49;i++){var freq=f[String(i)]||1;var rec=cnt[i]||0;w.push(freq*(1-rec/mx*0.6));}return pickWeighted(w);}
 var regenFns=[regen0,regen1,regen2];
+
+/* --- 各模型分析文字生成 --- */
+function buildExpl(modelIdx, n){
+  var f=DATA.stats.frequency;
+  var td=DATA.meta.total_draws;
+  var cnt20={};DATA.stats.hot_cold_20.forEach(function(d){cnt20[d.number]=d.count;});
+  var freq=f[String(n)]||0;
+  var pct=(freq/td*100).toFixed(1);
+  var rec20=cnt20[n]||0;
+
+  if(modelIdx===0){
+    var avg=td*6/49;
+    var cat=freq>avg*1.05?'熱號 (Hot)':freq<avg*0.95?'冷號 (Cold)':'中間 (Medium)';
+    return '分類：'+cat+'｜歷史出現 '+freq+' 次 ('+pct+'%)｜近20期出現 '+rec20+' 次';
+  } else if(modelIdx===1){
+    var r20=DATA.recent_20;
+    var first10=r20.slice(0,10);var last10=r20.slice(10,20);
+    var f1=first10.filter(function(d){return d.numbers.indexOf(n)>=0;}).length;
+    var f2=last10.filter(function(d){return d.numbers.indexOf(n)>=0;}).length;
+    var trend=f2>f1?'上升 ↑':f2<f1?'下降 ↓':'穩定 →';
+    return '趨勢：'+trend+'｜前10期出現 '+f1+' 次 → 後10期出現 '+f2+' 次｜近20期共 '+rec20+' 次';
+  } else {
+    var r20b=DATA.recent_20;
+    var gap='>20';
+    for(var i=r20b.length-1;i>=0;i--){
+      if(r20b[i].numbers.indexOf(n)>=0||r20b[i].special_number===n){gap=String(r20b.length-i);break;}
+    }
+    var mx2=Math.max.apply(null,DATA.stats.hot_cold_20.map(function(d){return d.count;}))||1;
+    var score=((freq/td)*(1-rec20/mx2*0.6)).toFixed(3);
+    return '歷史頻率 '+pct+'%｜近20期出現 '+rec20+' 次｜距上次出現 '+gap+' 期｜綜合分數 '+score;
+  }
+}
 
 /* --- 渲染 --- */
 document.getElementById('pred-intro').textContent='基於 '+DATA.meta.total_draws+' 期歷史數據的 3 種可解釋AI模型';
@@ -262,7 +277,7 @@ ms.forEach(function(m,idx){
   var ds=document.createElement('p');ds.style.cssText='font-size:13px;color:var(--text-secondary);margin-bottom:0';ds.textContent=m.description;dv.appendChild(ds);
 
   var bd=document.createElement('div');bd.className='pred-balls';
-  function renderBalls(nums,confs){
+  function makeBallsFor(nums,confs){
     bd.innerHTML='';
     nums.forEach(function(n,i){
       var wr=document.createElement('div');wr.className='pred-bw';
@@ -272,7 +287,7 @@ ms.forEach(function(m,idx){
       wr.appendChild(cf);bd.appendChild(wr);
     });
   }
-  renderBalls(m.numbers,m.confidence);
+  makeBallsFor(m.numbers,m.confidence);
   dv.appendChild(bd);
 
   var rw=document.createElement('div');rw.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap';
@@ -293,11 +308,23 @@ ms.forEach(function(m,idx){
   cbg.appendChild(cb);dv.appendChild(cbg);
 
   var ed=document.createElement('div');ed.className='expl-list';ed.style.display='none';
-  m.numbers.forEach(function(n){var it=document.createElement('div');it.className='expl-item';it.innerHTML='<span class="expl-num">'+n+'</span><span>'+m.explanations[String(n)]+'</span>';ed.appendChild(it);});
+  function renderExpl(nums){
+    ed.innerHTML='';
+    nums.forEach(function(n){
+      var it=document.createElement('div');it.className='expl-item';
+      it.innerHTML='<span class="expl-num">'+n+'</span><span>'+buildExpl(idx,n)+'</span>';
+      ed.appendChild(it);
+    });
+  }
+  renderExpl(m.numbers);
   dv.appendChild(ed);
 
   tb.onclick=function(){var v=ed.style.display!=='none';ed.style.display=v?'none':'block';tb.textContent=v?'查看分析':'隱藏分析';};
-  rb.onclick=function(){renderBalls(regenFns[idx](),null);};
+  rb.onclick=function(){
+    var newNums=regenFns[idx]();
+    makeBallsFor(newNums,null);
+    renderExpl(newNums);
+  };
 
   ct.appendChild(dv);
 });
