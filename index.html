@@ -85,8 +85,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .expl-num{font-family:var(--font-mono);font-weight:700;min-width:24px;color:var(--gold)}
 .toggle-btn{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);color:var(--gold);padding:8px 20px;border-radius:6px;font-family:var(--font-body);font-size:13px;cursor:pointer;transition:all .3s}
 .toggle-btn:hover{background:rgba(255,215,0,.15);border-color:var(--gold)}
-#regen-btn:hover{background:linear-gradient(135deg,rgba(0,230,118,.25),rgba(0,230,118,.15));border-color:var(--green);box-shadow:0 0 16px rgba(0,230,118,.2);transform:translateY(-1px)}
-#regen-btn:active{transform:translateY(0)}
 .chart-box{position:relative;width:100%;height:300px}
 .section-divider{margin:48px 0 32px;border:0;border-top:1px solid var(--border)}
 .disclaimer{text-align:center;padding:30px 20px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);margin-top:40px}
@@ -176,13 +174,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   <div id="predictions"></div>
   <div style="text-align:center;padding:20px;font-size:12px;color:var(--text-dim);background:rgba(255,61,90,.03);border-radius:var(--radius);border:1px solid rgba(255,61,90,.1);margin-top:16px" id="disclaimer-box"></div>
 
-  <!-- LUCKY RANDOM GENERATOR -->
-  <div class="card" style="background:linear-gradient(135deg,rgba(0,230,118,.03),rgba(255,215,0,.02));border-color:rgba(0,230,118,.2);margin-top:24px;text-align:center">
-    <div style="font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--green);margin-bottom:4px;letter-spacing:2px">LUCKY PICK · 幸運號碼</div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:20px">隨機為你選出 6 個號碼</div>
-    <div id="lucky-balls" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;min-height:72px;align-items:center"></div>
-    <button id="regen-btn" onclick="regenLucky()" style="background:linear-gradient(135deg,rgba(0,230,118,.15),rgba(0,230,118,.08));border:1px solid rgba(0,230,118,.4);color:var(--green);padding:12px 32px;border-radius:8px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;transition:all .3s;letter-spacing:1px">&#x21BB; 重新產生號碼</button>
-  </div>
 
 </div>
 
@@ -217,25 +208,100 @@ document.getElementById('meta-updated').textContent='更新：'+DATA.meta.last_u
 /* HOT/COLD */
 (function(){var hot=DATA.stats.hot_cold_20.slice(0,10);var cold=DATA.stats.hot_cold_20.slice().reverse().slice(0,10);var mx=Math.max.apply(null,DATA.stats.hot_cold_20.map(function(d){return d.count;}))||1;function rl(items,cid,col,gs,ge){var el=document.getElementById(cid);items.forEach(function(d,i){var div=document.createElement('div');div.className='hc-item';div.style.animationDelay=(i*.05)+'s';var pct=Math.max(8,(d.count/mx)*100);div.innerHTML='<div class="hc-num" style="color:'+col+'">'+d.number+'</div><div class="hc-bar-bg"><div class="hc-bar" style="width:'+pct+'%;background:linear-gradient(90deg,'+gs+','+ge+');color:'+col+'">'+d.count+'x</div></div>';el.appendChild(div);});}rl(hot,'hot-list','var(--red)','rgba(255,61,90,.6)','rgba(255,61,90,.2)');rl(cold,'cold-list','var(--cyan)','rgba(0,229,255,.5)','rgba(0,229,255,.1)');})();
 
-/* LUCKY RANDOM GENERATOR */
-function regenLucky(){
-  var nums=[];
-  while(nums.length<6){var n=Math.floor(Math.random()*49)+1;if(nums.indexOf(n)<0)nums.push(n);}
-  nums.sort(function(a,b){return a-b;});
-  var ct=document.getElementById('lucky-balls');
-  ct.innerHTML='';
-  nums.forEach(function(n,i){
-    var b=document.createElement('div');
-    b.className='pred-ball t2';
-    b.textContent=n;
-    b.style.cssText='width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:20px;animation:float 3s ease-in-out infinite;animation-delay:'+(i*.15)+'s;background:linear-gradient(145deg,#0a3a1a,#052510);border:2px solid var(--green);color:var(--green);box-shadow:0 0 20px rgba(0,230,118,.2)';
-    ct.appendChild(b);
-  });
-}
-regenLucky();
-
 /* PREDICTIONS */
-(function(){var ms=DATA.predictions.models;var bc=['var(--red)','var(--cyan)','var(--green)'];var bt=['t0','t1','t2'];var bb=['b0','b1','b2'];var ml=['MODEL 1','MODEL 2','MODEL 3'];document.getElementById('pred-intro').textContent='基於 '+DATA.meta.total_draws+' 期歷史數據的 3 種可解釋AI模型';document.getElementById('disclaimer-box').textContent=DATA.predictions.disclaimer;var ct=document.getElementById('predictions');ms.forEach(function(m,idx){var dv=document.createElement('div');dv.className='pred-model anim-up';dv.style.animationDelay=(idx*.15)+'s';var ln=document.createElement('div');ln.className='top-line';ln.style.background='linear-gradient(90deg,'+bc[idx]+',transparent)';dv.appendChild(ln);var bg=document.createElement('span');bg.className='badge '+bb[idx];bg.textContent=ml[idx];dv.appendChild(bg);var h3=document.createElement('h3');h3.style.cssText='font-size:18px;font-weight:700;margin-bottom:4px';h3.textContent=m.model;dv.appendChild(h3);var ds=document.createElement('p');ds.style.cssText='font-size:13px;color:var(--text-secondary);margin-bottom:0';ds.textContent=m.description;dv.appendChild(ds);var bd=document.createElement('div');bd.className='pred-balls';m.numbers.forEach(function(n,i){var wr=document.createElement('div');wr.className='pred-bw';var bl=document.createElement('div');bl.className='pred-ball '+bt[idx];bl.style.animationDelay=(i*.3)+'s';bl.textContent=n;wr.appendChild(bl);var cf=document.createElement('div');cf.className='conf-text';cf.textContent=Math.round(m.confidence[String(n)]*100)+'%';wr.appendChild(cf);bd.appendChild(wr);});dv.appendChild(bd);var rw=document.createElement('div');rw.style.cssText='display:flex;justify-content:space-between;align-items:center';rw.innerHTML='<span style="font-size:12px;color:var(--text-secondary)">平均信心分數: <strong style="color:'+bc[idx]+'">'+Math.round(m.avg_confidence*100)+'%</strong></span>';var tb=document.createElement('button');tb.className='toggle-btn';tb.textContent='查看分析';rw.appendChild(tb);dv.appendChild(rw);var cbg=document.createElement('div');cbg.className='conf-bar-bg';var cb=document.createElement('div');cb.className='conf-bar';cb.style.cssText='width:'+Math.round(m.avg_confidence*100)+'%;background:'+bc[idx]+';box-shadow:0 0 10px '+bc[idx]+'40';cbg.appendChild(cb);dv.appendChild(cbg);var ed=document.createElement('div');ed.className='expl-list';ed.style.display='none';m.numbers.forEach(function(n){var it=document.createElement('div');it.className='expl-item';it.innerHTML='<span class="expl-num">'+n+'</span><span>'+m.explanations[String(n)]+'</span>';ed.appendChild(it);});dv.appendChild(ed);tb.onclick=function(){var v=ed.style.display!=='none';ed.style.display=v?'none':'block';tb.textContent=v?'查看分析':'隱藏分析';};ct.appendChild(dv);});})();
+(function(){
+var ms=DATA.predictions.models;
+var bc=['var(--red)','var(--cyan)','var(--green)'];
+var bt=['t0','t1','t2'];
+var bb=['b0','b1','b2'];
+var ml=['MODEL 1','MODEL 2','MODEL 3'];
+
+/* --- 各模型重新產生號碼邏輯 --- */
+function pickWeighted(w49){
+  var total=w49.reduce(function(a,b){return a+b;},0);
+  var nums=[];var tries=0;
+  while(nums.length<6&&tries<500){
+    tries++;
+    var r=Math.random()*total,cum=0;
+    for(var i=0;i<49;i++){cum+=w49[i];if(r<=cum){if(nums.indexOf(i+1)<0){nums.push(i+1);}break;}}
+  }
+  return nums.sort(function(a,b){return a-b;});
+}
+// Model 0: 頻率加權 — 歷史出現次數高的號碼權重高
+function regen0(){
+  var f=DATA.stats.frequency;var w=[];
+  for(var i=1;i<=49;i++)w.push(f[String(i)]||1);
+  return pickWeighted(w);
+}
+// Model 1: 近期趨勢 — 近20期出現次數高的號碼權重高
+function regen1(){
+  var cnt={};DATA.stats.hot_cold_20.forEach(function(d){cnt[d.number]=d.count;});
+  var w=[];for(var i=1;i<=49;i++)w.push((cnt[i]||0)+1);
+  return pickWeighted(w);
+}
+// Model 2: 集成 — 歷史頻率高 且 近期較少出現（冷中選強）
+function regen2(){
+  var f=DATA.stats.frequency;var cnt={};
+  DATA.stats.hot_cold_20.forEach(function(d){cnt[d.number]=d.count;});
+  var mx=Math.max.apply(null,DATA.stats.hot_cold_20.map(function(d){return d.count;}))||1;
+  var w=[];for(var i=1;i<=49;i++){var freq=f[String(i)]||1;var rec=cnt[i]||0;w.push(freq*(1-rec/mx*0.6));}
+  return pickWeighted(w);
+}
+var regenFns=[regen0,regen1,regen2];
+
+/* --- 渲染 --- */
+document.getElementById('pred-intro').textContent='基於 '+DATA.meta.total_draws+' 期歷史數據的 3 種可解釋AI模型';
+document.getElementById('disclaimer-box').textContent=DATA.predictions.disclaimer;
+var ct=document.getElementById('predictions');
+
+ms.forEach(function(m,idx){
+  var dv=document.createElement('div');dv.className='pred-model anim-up';dv.style.animationDelay=(idx*.15)+'s';
+  var ln=document.createElement('div');ln.className='top-line';ln.style.background='linear-gradient(90deg,'+bc[idx]+',transparent)';dv.appendChild(ln);
+  var bg=document.createElement('span');bg.className='badge '+bb[idx];bg.textContent=ml[idx];dv.appendChild(bg);
+  var h3=document.createElement('h3');h3.style.cssText='font-size:18px;font-weight:700;margin-bottom:4px';h3.textContent=m.model;dv.appendChild(h3);
+  var ds=document.createElement('p');ds.style.cssText='font-size:13px;color:var(--text-secondary);margin-bottom:0';ds.textContent=m.description;dv.appendChild(ds);
+
+  var bd=document.createElement('div');bd.className='pred-balls';
+  function renderBalls(nums,confs){
+    bd.innerHTML='';
+    nums.forEach(function(n,i){
+      var wr=document.createElement('div');wr.className='pred-bw';
+      var bl=document.createElement('div');bl.className='pred-ball '+bt[idx];bl.style.animationDelay=(i*.3)+'s';bl.textContent=n;
+      wr.appendChild(bl);
+      var cf=document.createElement('div');cf.className='conf-text';cf.textContent=confs?Math.round(confs[String(n)]*100)+'%':'—';
+      wr.appendChild(cf);bd.appendChild(wr);
+    });
+  }
+  renderBalls(m.numbers,m.confidence);
+  dv.appendChild(bd);
+
+  var rw=document.createElement('div');rw.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap';
+  rw.innerHTML='<span style="font-size:12px;color:var(--text-secondary)">平均信心分數: <strong style="color:'+bc[idx]+'">'+Math.round(m.avg_confidence*100)+'%</strong></span>';
+  var btnWrap=document.createElement('div');btnWrap.style.cssText='display:flex;gap:8px';
+
+  var tb=document.createElement('button');tb.className='toggle-btn';tb.textContent='查看分析';btnWrap.appendChild(tb);
+
+  var rb=document.createElement('button');rb.className='toggle-btn';rb.style.cssText='border-color:'+bc[idx]+';color:'+bc[idx];rb.textContent='↻ 重新產生';
+  rb.onmouseenter=function(){rb.style.background='rgba(255,255,255,.06)';};
+  rb.onmouseleave=function(){rb.style.background='';};
+  btnWrap.appendChild(rb);
+  rw.appendChild(btnWrap);
+  dv.appendChild(rw);
+
+  var cbg=document.createElement('div');cbg.className='conf-bar-bg';
+  var cb=document.createElement('div');cb.className='conf-bar';cb.style.cssText='width:'+Math.round(m.avg_confidence*100)+'%;background:'+bc[idx]+';box-shadow:0 0 10px '+bc[idx]+'40';
+  cbg.appendChild(cb);dv.appendChild(cbg);
+
+  var ed=document.createElement('div');ed.className='expl-list';ed.style.display='none';
+  m.numbers.forEach(function(n){var it=document.createElement('div');it.className='expl-item';it.innerHTML='<span class="expl-num">'+n+'</span><span>'+m.explanations[String(n)]+'</span>';ed.appendChild(it);});
+  dv.appendChild(ed);
+
+  tb.onclick=function(){var v=ed.style.display!=='none';ed.style.display=v?'none':'block';tb.textContent=v?'查看分析':'隱藏分析';};
+  rb.onclick=function(){renderBalls(regenFns[idx](),null);};
+
+  ct.appendChild(dv);
+});
+})();
 
 /* CHARTS - created directly, all visible on page */
 Chart.defaults.color='#8a8578';
