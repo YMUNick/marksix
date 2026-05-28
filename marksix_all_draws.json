@@ -25100,5 +25100,19 @@
       47
     ],
     "special_number": 33
+  },
+  {
+    "draw_id": "26/057",
+    "draw_date": "2026-05-28",
+    "day_of_week": "Thursday",
+    "numbers": [
+      7,
+      13,
+      25,
+      35,
+      40,
+      43
+    ],
+    "special_number": 47
   }
 ]
