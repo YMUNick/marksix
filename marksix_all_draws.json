@@ -25268,5 +25268,19 @@
       30
     ],
     "special_number": 29
+  },
+  {
+    "draw_id": "26/069",
+    "draw_date": "2026-06-28",
+    "day_of_week": "Sunday",
+    "numbers": [
+      5,
+      7,
+      26,
+      32,
+      37,
+      40
+    ],
+    "special_number": 35
   }
 ]
