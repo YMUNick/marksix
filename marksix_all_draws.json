@@ -25632,5 +25632,19 @@
       45
     ],
     "special_number": 35
+  },
+  {
+    "draw_id": "26/095",
+    "draw_date": "2026-08-29",
+    "day_of_week": "Saturday",
+    "numbers": [
+      4,
+      7,
+      8,
+      11,
+      26,
+      30
+    ],
+    "special_number": 42
   }
 ]
