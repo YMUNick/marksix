@@ -25800,5 +25800,19 @@
       41
     ],
     "special_number": 28
+  },
+  {
+    "draw_id": "26/107",
+    "draw_date": "2026-10-08",
+    "day_of_week": "Thursday",
+    "numbers": [
+      18,
+      19,
+      24,
+      31,
+      40,
+      44
+    ],
+    "special_number": 5
   }
 ]
