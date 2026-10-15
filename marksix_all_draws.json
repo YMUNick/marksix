@@ -25842,5 +25842,19 @@
       26
     ],
     "special_number": 38
+  },
+  {
+    "draw_id": "26/110",
+    "draw_date": "2026-10-15",
+    "day_of_week": "Thursday",
+    "numbers": [
+      3,
+      7,
+      8,
+      10,
+      36,
+      42
+    ],
+    "special_number": 20
   }
 ]
