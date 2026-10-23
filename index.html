@@ -217,13 +217,16 @@ var bb=['b0','b1','b2'];
 var ml=['MODEL 1','MODEL 2','MODEL 3'];
 
 /* --- 各模型重新產生號碼邏輯 --- */
+/* 依權重不放回抽 6 個（保證 6 個不重複、1-49） */
 function pickWeighted(w49){
-  var total=w49.reduce(function(a,b){return a+b;},0);
-  var nums=[];var tries=0;
-  while(nums.length<6&&tries<500){
-    tries++;
-    var r=Math.random()*total,cum=0;
-    for(var i=0;i<49;i++){cum+=w49[i];if(r<=cum){if(nums.indexOf(i+1)<0){nums.push(i+1);}break;}}
+  var pool=[];for(var i=0;i<49;i++){var w=w49[i];pool.push({n:i+1,w:(isFinite(w)&&w>0)?w:0});}
+  var nums=[];
+  while(nums.length<6){
+    var total=pool.reduce(function(a,p){return a+p.w;},0);
+    var k=pool.length-1;
+    if(total>0){var r=Math.random()*total;for(var j=0;j<pool.length;j++){r-=pool[j].w;if(r<0){k=j;break;}}}
+    else{k=Math.floor(Math.random()*pool.length);}
+    nums.push(pool.splice(k,1)[0].n);
   }
   return nums.sort(function(a,b){return a-b;});
 }
@@ -254,9 +257,9 @@ function buildExpl(modelIdx, n){
     return '趨勢：'+trend+'｜前10期出現 '+f1+' 次 → 後10期出現 '+f2+' 次｜近20期共 '+rec20+' 次';
   } else {
     var r20b=DATA.recent_20;
-    var gap='>20';
+    var gap='>'+(r20b.length-1);
     for(var i=r20b.length-1;i>=0;i--){
-      if(r20b[i].numbers.indexOf(n)>=0||r20b[i].special_number===n){gap=String(r20b.length-i);break;}
+      if(r20b[i].numbers.indexOf(n)>=0){gap=String(r20b.length-1-i);break;}
     }
     var mx2=Math.max.apply(null,DATA.stats.hot_cold_20.map(function(d){return d.count;}))||1;
     var score=((freq/td)*(1-rec20/mx2*0.6)).toFixed(3);
@@ -308,15 +311,18 @@ ms.forEach(function(m,idx){
   cbg.appendChild(cb);dv.appendChild(cbg);
 
   var ed=document.createElement('div');ed.className='expl-list';ed.style.display='none';
-  function renderExpl(nums){
+  /* 模型原本選的號碼用 Python 產生的說明；重新產生的號碼才用前端估算 */
+  function renderExpl(nums,expl){
     ed.innerHTML='';
     nums.forEach(function(n){
       var it=document.createElement('div');it.className='expl-item';
-      it.innerHTML='<span class="expl-num">'+n+'</span><span>'+buildExpl(idx,n)+'</span>';
+      var num=document.createElement('span');num.className='expl-num';num.textContent=n;
+      var tx=document.createElement('span');tx.textContent=(expl&&expl[String(n)])||buildExpl(idx,n);
+      it.appendChild(num);it.appendChild(tx);
       ed.appendChild(it);
     });
   }
-  renderExpl(m.numbers);
+  renderExpl(m.numbers,m.explanations);
   dv.appendChild(ed);
 
   tb.onclick=function(){var v=ed.style.display!=='none';ed.style.display=v?'none':'block';tb.textContent=v?'查看分析':'隱藏分析';};

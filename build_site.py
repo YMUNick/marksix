@@ -30,6 +30,40 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleW
 BASE_URL = "https://lottery.hk/en/mark-six/results"
 
 # ============================================================
+# 0. 六合彩規則驗證
+# ============================================================
+DRAW_ID_RE = re.compile(r'^\d{2}/\d{3}$')
+
+def is_valid_ball(n):
+    return type(n) is int and 1 <= n <= 49
+
+def is_valid_draw(d):
+    """六合彩規則：1-49 抽出 6 個主號碼 + 1 個特別號，7 個號碼互不重複"""
+    if not isinstance(d, dict):
+        return False
+    nums, special = d.get('numbers'), d.get('special_number')
+    if not isinstance(nums, list) or len(nums) != 6 or not all(is_valid_ball(n) for n in nums):
+        return False
+    if not is_valid_ball(special) or len(set(nums + [special])) != 7:
+        return False
+    draw_id, date = d.get('draw_id'), d.get('draw_date')
+    if not isinstance(draw_id, str) or not DRAW_ID_RE.match(draw_id):
+        return False
+    try:
+        dt = datetime.strptime(date, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        return False
+    # 期號前兩碼 = 年份後兩碼（例如 26/001 → 2026）
+    return draw_id[:2] == dt.strftime("%y")
+
+def merge_draws(existing, new_draws):
+    """以期號為準合併，同一期以新爬到的為準（官方更正時不會重複）"""
+    merged = {d['draw_id']: d for d in existing}
+    for d in new_draws:
+        merged[d['draw_id']] = d
+    return sorted(merged.values(), key=lambda x: (x['draw_date'], x['draw_id']))
+
+# ============================================================
 # 1. SCRAPER
 # ============================================================
 def scrape_year(year):
@@ -101,22 +135,28 @@ def scrape_year(year):
         special = all_nums[6]
         
         days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
-        draws.append({
+        draw = {
             "draw_id": draw_num_el,
             "draw_date": date_str,
             "day_of_week": days[dt.weekday()],
             "numbers": main_nums,
             "special_number": special
-        })
+        }
+        if len(all_nums) != 7 or not is_valid_draw(draw):
+            print(f"⚠️ 略過不符規則的資料 {draw_num_el}: {all_nums}", end=" ", flush=True)
+            continue
+        draws.append(draw)
     
     print(f"✅ {len(draws)} draws")
     return draws
 
-def scrape_all(start_year=2013, end_year=2026):
+def scrape_all(start_year=2013, end_year=None):
     """Scrape all years"""
     print("🎲 開始爬取香港六合彩歷史資料...")
     print("=" * 50)
     
+    if end_year is None:
+        end_year = datetime.now().year
     all_draws = []
     for year in range(start_year, end_year + 1):
         draws = scrape_year(year)
@@ -124,15 +164,7 @@ def scrape_all(start_year=2013, end_year=2026):
         time.sleep(1)  # Be polite
     
     # De-duplicate and sort
-    seen = set()
-    unique = []
-    for d in all_draws:
-        key = d['draw_date'] + str(d['numbers'])
-        if key not in seen:
-            seen.add(key)
-            unique.append(d)
-    
-    unique.sort(key=lambda x: x['draw_date'])
+    unique = merge_draws([], all_draws)
     print(f"\n✅ 總共爬取 {len(unique)} 期資料")
     return unique
 
@@ -216,7 +248,7 @@ def predict_trend(draws):
     r20 = draws[-20:]
     weighted = {n: 0 for n in range(1, 50)}
     for i, d in enumerate(r20):
-        w = math.exp(0.1 * (i - 19))
+        w = math.exp(0.1 * (i - (len(r20) - 1)))  # 最新一期權重 = 1
         for n in d['numbers']: weighted[n] += w
     
     first, second = draws[-20:-10], draws[-10:]
@@ -247,20 +279,22 @@ def predict_ml(draws):
     total = len(draws)
     all_freq = Counter()
     r50_freq = Counter()
+    r50 = draws[-50:]
     for d in draws:
         for n in d['numbers']: all_freq[n] += 1
-    for d in draws[-50:]:
+    for d in r50:
         for n in d['numbers']: r50_freq[n] += 1
     
+    # 間隔：0 = 最新一期剛開出；從未開出 = 總期數
     last_seen = {}
     for i, d in enumerate(draws):
         for n in d['numbers']: last_seen[n] = i
-    gaps = {n: total - 1 - last_seen.get(n, 0) for n in range(1, 50)}
+    gaps = {n: total - 1 - last_seen.get(n, -1) for n in range(1, 50)}
     
     scores = {}
     for n in range(1, 50):
         fh = all_freq.get(n, 0) / total
-        fr = r50_freq.get(n, 0) / 50
+        fr = r50_freq.get(n, 0) / len(r50)
         avg_gap = total / max(all_freq.get(n, 0), 1)
         fg = min(2.0, gaps[n] / max(avg_gap, 1))
         scores[n] = fh * 0.25 + fr * 0.35 + fg * 0.15 * 0.3 + 0.1
@@ -285,7 +319,7 @@ def predict_ml(draws):
     for n in picked:
         c = round(max(0.35, min(0.88, scores[n] * 3 + 0.3)), 2)
         conf[str(n)] = c
-        expl[str(n)] = f"歷史頻率 {round(all_freq.get(n,0)/total*100,1)}%｜近50期出現 {r50_freq.get(n,0)} 次｜間隔 {gaps[n]} 期｜綜合分數 {round(scores[n],3)}"
+        expl[str(n)] = f"歷史頻率 {round(all_freq.get(n,0)/total*100,1)}%｜近{len(r50)}期出現 {r50_freq.get(n,0)} 次｜間隔 {gaps[n]} 期｜綜合分數 {round(scores[n],3)}"
     
     return {"model": "集成學習模型 (ML Ensemble)", "model_id": "ml_ensemble",
             "description": "結合歷史頻率、近期趨勢、間隔分析與奇偶平衡的多特徵集成模型",
@@ -383,12 +417,23 @@ def build_site(draws):
 # ============================================================
 # MAIN
 # ============================================================
-def load_existing():
-    """Load previously saved draws (marksix_all_draws.json)"""
-    if os.path.exists('marksix_all_draws.json'):
-        with open('marksix_all_draws.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
+def load_existing(path='marksix_all_draws.json'):
+    """Load previously saved draws, dropping any that break the rules"""
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError) as e:
+        print(f"⚠️ 無法讀取 {path}: {e}")
+        return []
+    if not isinstance(data, list):
+        print(f"⚠️ {path} 格式錯誤，忽略")
+        return []
+    valid = [d for d in data if is_valid_draw(d)]
+    if len(valid) != len(data):
+        print(f"⚠️ {path} 有 {len(data) - len(valid)} 筆不符規則的資料，已略過")
+    return valid
 
 if __name__ == "__main__":
     existing = load_existing()
@@ -404,13 +449,10 @@ if __name__ == "__main__":
         if not new_draws:
             print("⚠️ 這次爬不到資料（網站可能暫時無回應），保留既有資料，不更新。")
             sys.exit(0)
-        merged = {d['draw_date'] + str(d['numbers']): d for d in existing}
-        for d in new_draws:
-            merged[d['draw_date'] + str(d['numbers'])] = d
-        draws = sorted(merged.values(), key=lambda x: x['draw_date'])
+        draws = merge_draws(existing, new_draws)
         print(f"✅ 合併後共 {len(draws)} 期（新增 {len(draws) - len(existing)} 期）")
     else:
-        draws = scrape_all(2013, this_year)
+        draws = scrape_all(2013)
     
     if len(draws) == 0:
         print("❌ 沒有爬取到任何資料，請檢查網路連線。")
