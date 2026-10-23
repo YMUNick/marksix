@@ -362,6 +362,7 @@ def build_site(draws):
     
     # Read the template HTML and replace data
     data_json = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+    data_json = data_json.replace('</', '<\\/')  # 嵌在 <script> 裡，避免提早結束標籤
     
     # Always save compact JSON as backup
     with open('marksix_compact.json', 'w', encoding='utf-8') as f:
@@ -435,9 +436,22 @@ def load_existing(path='marksix_all_draws.json'):
         print(f"⚠️ {path} 有 {len(data) - len(valid)} 筆不符規則的資料，已略過")
     return valid
 
-if __name__ == "__main__":
+STALE_DAYS = 14  # 六合彩每週約開 3 次，超過這麼久沒新資料代表爬蟲可能壞了
+
+def is_fresh(draws, today=None):
+    """最新一期距今不超過 STALE_DAYS 天"""
+    today = today or datetime.now().date()
+    latest = datetime.strptime(draws[-1]['draw_date'], "%Y-%m-%d").date()
+    age = (today - latest).days
+    if age > STALE_DAYS:
+        print(f"❌ 最新一期是 {draws[-1]['draw_date']}，已經 {age} 天沒有新資料，請檢查資料來源 {BASE_URL}")
+        return False
+    return True
+
+def main(today=None):
+    """回傳 exit code：0 = 正常（含沒有新資料），1 = 需要人工處理"""
     existing = load_existing()
-    this_year = datetime.now().year
+    this_year = (today or datetime.now().date()).year
     
     if existing:
         # 已有歷史資料：只爬今年（和去年，處理跨年），避免每次發14個請求
@@ -447,16 +461,18 @@ if __name__ == "__main__":
             new_draws.extend(scrape_year(year))
             time.sleep(1)
         if not new_draws:
-            print("⚠️ 這次爬不到資料（網站可能暫時無回應），保留既有資料，不更新。")
-            sys.exit(0)
+            print("⚠️ 這次爬不到資料（網站可能暫時無回應），保留既有資料。")
         draws = merge_draws(existing, new_draws)
+        if draws == existing:
+            # 沒有新開獎就不重建，避免只改了更新日期的 commit 和 Pages 重新部署
+            print("ℹ️ 沒有新的開獎資料，不需要重建網站。")
+            return 0 if is_fresh(draws, today) else 1
         print(f"✅ 合併後共 {len(draws)} 期（新增 {len(draws) - len(existing)} 期）")
     else:
         draws = scrape_all(2013)
-    
-    if len(draws) == 0:
-        print("❌ 沒有爬取到任何資料，請檢查網路連線。")
-        sys.exit(1)
+        if not draws:
+            print("❌ 沒有爬取到任何資料，請檢查網路連線。")
+            return 1
     
     build_site(draws)
     
@@ -464,3 +480,7 @@ if __name__ == "__main__":
     print("   1. 確認 index.html 已更新")
     print("   2. git add . && git commit -m 'update data' && git push")
     print("   3. 等待 1-2 分鐘，訪問你的 GitHub Pages 網站")
+    return 0 if is_fresh(draws, today) else 1
+
+if __name__ == "__main__":
+    sys.exit(main())

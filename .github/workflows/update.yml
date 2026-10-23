@@ -7,21 +7,34 @@ on:
   workflow_dispatch:
     # 也可以在 GitHub Actions 頁面手動觸發
 
+permissions:
+  contents: write
+
+# 同一時間只跑一個更新，避免兩次 push 互相衝突
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
+
     steps:
       - name: 📥 Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          cache: pip
 
       - name: 📦 Install dependencies
-        run: pip install requests beautifulsoup4
+        run: pip install -r requirements.txt
+
+      - name: 🧪 Run tests
+        run: python -m unittest discover -s tests
 
       - name: 🕷️ Scrape & build
         run: python build_site.py

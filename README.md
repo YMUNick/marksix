@@ -25,58 +25,61 @@
 ## 🏗️ 專案結構
 
 ```
-marksix-project/
-├── public/
-│   └── index.html          # 完整前端 (React + Chart.js)
-├── scripts/
-│   ├── scraper.py          # 資料爬蟲 (lottery.hk)
-│   ├── generate_data.py    # 統計計算 + AI 預測
-│   └── api_server.py       # Flask API 後端
-├── data/
-│   ├── marksix_data.json   # 完整資料 (含所有統計)
-│   └── compact_data.json   # 前端嵌入用精簡版
-└── README.md
+marksix/
+├── build_site.py              # 爬蟲 + 統計 + AI 預測 + 產生 index.html（主程式）
+├── index.html                 # 網站（GitHub Pages），資料內嵌在 var DATA=
+├── marksix_all_draws.json     # 全部歷史開獎資料
+├── marksix_compact.json       # 網站用的統計與預測資料
+├── requirements.txt
+├── tests/
+│   ├── test_build_site.py     # 規則驗證、爬蟲、合併、統計、模型邊界測試
+│   └── test_frontend.js       # 前端測試（Playwright）
+├── .github/workflows/
+│   ├── update.yml             # 每日自動更新資料
+│   └── test.yml               # push / PR 時跑測試
+└── scraper.py, generate_data.py, api_server.py   # 舊版腳本，未維護（路徑指向不存在的 data/）
 ```
 
 ---
 
 ## 🚀 快速開始
 
-### 方法 A：直接使用（靜態版本）
-
-前端已內嵌資料，直接開啟即可使用：
-
 ```bash
-# 1. 直接打開前端
-open public/index.html
-# 或用任何 HTTP 伺服器
-python3 -m http.server 8080 --directory public/
-# 然後打開 http://localhost:8080
+pip install -r requirements.txt
+
+# 更新資料並重建 index.html
+#  - 已有 marksix_all_draws.json：只抓今年與去年，合併後重建；沒有新開獎就不動
+#  - 沒有既有資料：從 2013 年全部抓取
+python3 build_site.py
+
+# 本機預覽
+python3 -m http.server 8080
+# 打開 http://localhost:8080
 ```
 
-### 方法 B：完整本地開發
+### 資料規則
+
+每期資料必須符合六合彩規則才會被收錄（`is_valid_draw`）：
+
+- 6 個主號碼 + 1 個特別號，都在 1–49
+- 7 個號碼互不重複
+- 期號格式 `YY/NNN`，且 `YY` 與開獎日期年份一致
+
+### 執行測試
 
 ```bash
-# 1. 安裝 Python 依賴
-pip install requests beautifulsoup4 flask flask-cors
+python3 -m unittest discover -s tests -v
 
-# 2. 爬取最新資料（需要網路）
-python3 scripts/scraper.py
-
-# 3. 生成統計與預測
-python3 scripts/generate_data.py
-
-# 4. 啟動 API 伺服器
-python3 scripts/api_server.py
-# API 運行在 http://localhost:5000
-
-# 5. 開啟前端
-open public/index.html
+# 前端測試（需要 Node.js）
+npm install --no-save playwright && npx playwright install chromium
+node tests/test_frontend.js
 ```
 
 ---
 
 ## 🔌 API 文檔
+
+> ⚠️ `api_server.py` 是舊版腳本，需要 `data/marksix_data.json`（由同樣是舊版的 `generate_data.py` 產生），目前沒有維護，GitHub Pages 網站也沒有用到。
 
 | 端點 | 方法 | 說明 |
 |------|------|------|
@@ -141,52 +144,20 @@ curl http://localhost:5000/api/export/csv -o results.csv
 
 ---
 
-## 🚀 部署到 GitHub Pages
+## 🔄 自動更新（GitHub Actions）
 
-```bash
-# 1. 建立 GitHub 倉庫
-git init
-git remote add origin https://github.com/YOUR_USERNAME/marksix-analysis.git
+`.github/workflows/update.yml` 每天香港時間 22:30 執行（也可以在 Actions 頁面手動觸發）：
 
-# 2. 複製 public/index.html 到根目錄
-cp public/index.html ./index.html
+1. 跑單元測試
+2. `python build_site.py`：抓最新開獎、合併、重建網站
+3. 有變更才 commit 並 push，GitHub Pages 自動部署
 
-# 3. 推送
-git add .
-git commit -m "Initial commit: Mark Six Analytics Platform"
-git push -u origin main
-
-# 4. 啟用 GitHub Pages
-#    Settings → Pages → Source: Deploy from branch → main → / (root)
-
-# 5. 訪問
-#    https://YOUR_USERNAME.github.io/marksix-analysis/
-```
-
----
-
-## 🔄 自動更新（Cron Job）
-
-建立 `update.sh`：
-
-```bash
-#!/bin/bash
-cd /path/to/marksix-project
-python3 scripts/scraper.py --update
-python3 scripts/generate_data.py
-# 可選：自動推送
-git add data/
-git commit -m "Auto update: $(date +%Y-%m-%d)"
-git push
-```
-
-加入 crontab（每天晚上 10:30 更新）：
-
-```bash
-crontab -e
-# 加入：
-30 22 * * * /path/to/update.sh >> /path/to/update.log 2>&1
-```
+| 情況 | 結果 |
+|------|------|
+| 有新開獎 | 更新資料與網站 ✅ |
+| 沒有新開獎 | 不重建、不 commit ✅ |
+| lottery.hk 暫時無回應 | 重試 3 次後保留既有資料 ✅ |
+| 超過 14 天沒有新資料 | workflow 失敗 ❌，提醒檢查資料來源 |
 
 ---
 

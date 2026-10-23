@@ -6,6 +6,7 @@ build_site.py 的規則與邊界測試
 """
 
 import json, os, random, sys, tempfile, unittest
+from datetime import date, timedelta
 from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -272,6 +273,92 @@ class TestBuildSite(unittest.TestCase):
                 os.chdir(cwd)
         self.assertIn('"total_draws":30', out)
         self.assertEqual(out.count('var DATA='), 1)
+
+
+    def test_script_tag_in_data_is_escaped(self):
+        draws = random_draws(5)
+        with tempfile.TemporaryDirectory() as tmp:
+            with open(os.path.join(tmp, 'index.html'), 'w', encoding='utf-8') as f:
+                f.write('<script>\nvar DATA={};\n</script>\n')
+            cwd = os.getcwd()
+            os.chdir(tmp)
+            try:
+                with mock.patch.object(bs, 'compute_stats', return_value={"x": "</script><b>"}):
+                    bs.build_site(draws)
+                with open('index.html', encoding='utf-8') as f:
+                    out = f.read()
+            finally:
+                os.chdir(cwd)
+        self.assertEqual(out.count('</script>'), 1)
+
+
+# ============================================================
+# main()：增量更新流程
+# ============================================================
+class TestMain(unittest.TestCase):
+    EXISTING = [make_draw("26/001", "2026-10-20", [1, 2, 3, 4, 5, 6], 7),
+                make_draw("26/002", "2026-10-22", [8, 9, 10, 11, 12, 13], 14)]
+    TODAY = date(2026, 10, 23)
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.cwd = os.getcwd()
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+        with open(os.path.join(root, 'index.html'), encoding='utf-8') as f:
+            html = f.read()
+        os.chdir(self.tmp.name)
+        with open('index.html', 'w', encoding='utf-8') as f:
+            f.write(html)
+        with open('marksix_all_draws.json', 'w', encoding='utf-8') as f:
+            json.dump(self.EXISTING, f)
+        self.html_before = html
+        sleep = mock.patch.object(bs.time, 'sleep')
+        sleep.start()
+        self.addCleanup(sleep.stop)
+
+    def tearDown(self):
+        os.chdir(self.cwd)
+        self.tmp.cleanup()
+
+    def run_main(self, scraped, today=None):
+        def fake_scrape(year):
+            return [d for d in scraped if d['draw_date'].startswith(str(year))]
+        with mock.patch.object(bs, 'scrape_year', side_effect=fake_scrape):
+            return bs.main(today or self.TODAY)
+
+    def html(self):
+        with open('index.html', encoding='utf-8') as f:
+            return f.read()
+
+    def test_no_new_draw_does_not_rebuild(self):
+        self.assertEqual(self.run_main(self.EXISTING), 0)
+        self.assertEqual(self.html(), self.html_before)
+
+    def test_site_down_keeps_data(self):
+        self.assertEqual(self.run_main([]), 0)
+        self.assertEqual(self.html(), self.html_before)
+
+    def test_new_draw_rebuilds(self):
+        new = make_draw("26/003", "2026-10-23", [20, 21, 22, 23, 24, 25], 26)
+        self.assertEqual(self.run_main(self.EXISTING + [new]), 0)
+        self.assertIn('"total_draws":3', self.html())
+        self.assertEqual(len(bs.load_existing()), 3)
+
+    def test_correction_rebuilds(self):
+        fixed = make_draw("26/002", "2026-10-22", [8, 9, 10, 11, 12, 15], 14)
+        self.assertEqual(self.run_main([self.EXISTING[0], fixed]), 0)
+        self.assertEqual(bs.load_existing()[-1]['numbers'], [8, 9, 10, 11, 12, 15])
+
+    def test_stale_data_fails(self):
+        # 網站掛了兩週以上：要讓 workflow 失敗，提醒去檢查
+        later = self.TODAY + timedelta(days=bs.STALE_DAYS + 1)
+        self.assertEqual(self.run_main([], today=later), 1)
+
+    def test_year_boundary_scrapes_both_years(self):
+        years = []
+        with mock.patch.object(bs, 'scrape_year', side_effect=lambda y: years.append(y) or []):
+            bs.main(date(2027, 1, 2))
+        self.assertEqual(years, [2026, 2027])
 
 
 if __name__ == '__main__':
