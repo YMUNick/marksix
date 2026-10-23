@@ -37,11 +37,18 @@ def scrape_year(year):
     url = f"{BASE_URL}/{year}"
     print(f"  📡 Fetching {year}...", end=" ", flush=True)
     
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=30)
-        resp.raise_for_status()
-    except Exception as e:
-        print(f"❌ Error: {e}")
+    resp = None
+    for attempt in range(1, 4):
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=20)
+            resp.raise_for_status()
+            break
+        except Exception as e:
+            print(f"⚠️ 第{attempt}次失敗: {e}", end=" ", flush=True)
+            resp = None
+            time.sleep(5 * attempt)
+    if resp is None:
+        print("❌ 放棄")
         return []
     
     soup = BeautifulSoup(resp.text, 'html.parser')
@@ -376,8 +383,34 @@ def build_site(draws):
 # ============================================================
 # MAIN
 # ============================================================
+def load_existing():
+    """Load previously saved draws (marksix_all_draws.json)"""
+    if os.path.exists('marksix_all_draws.json'):
+        with open('marksix_all_draws.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
 if __name__ == "__main__":
-    draws = scrape_all(2013, 2026)
+    existing = load_existing()
+    this_year = datetime.now().year
+    
+    if existing:
+        # 已有歷史資料：只爬今年（和去年，處理跨年），避免每次發14個請求
+        print(f"📂 已載入 {len(existing)} 期既有資料，只更新最新年份")
+        new_draws = []
+        for year in range(this_year - 1, this_year + 1):
+            new_draws.extend(scrape_year(year))
+            time.sleep(1)
+        if not new_draws:
+            print("⚠️ 這次爬不到資料（網站可能暫時無回應），保留既有資料，不更新。")
+            sys.exit(0)
+        merged = {d['draw_date'] + str(d['numbers']): d for d in existing}
+        for d in new_draws:
+            merged[d['draw_date'] + str(d['numbers'])] = d
+        draws = sorted(merged.values(), key=lambda x: x['draw_date'])
+        print(f"✅ 合併後共 {len(draws)} 期（新增 {len(draws) - len(existing)} 期）")
+    else:
+        draws = scrape_all(2013, this_year)
     
     if len(draws) == 0:
         print("❌ 沒有爬取到任何資料，請檢查網路連線。")
