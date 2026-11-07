@@ -25954,5 +25954,19 @@
       47
     ],
     "special_number": 46
+  },
+  {
+    "draw_id": "26/118",
+    "draw_date": "2026-11-07",
+    "day_of_week": "Saturday",
+    "numbers": [
+      11,
+      14,
+      17,
+      21,
+      22,
+      29
+    ],
+    "special_number": 40
   }
 ]
