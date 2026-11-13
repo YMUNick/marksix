@@ -25982,5 +25982,19 @@
       24
     ],
     "special_number": 19
+  },
+  {
+    "draw_id": "26/120",
+    "draw_date": "2026-11-12",
+    "day_of_week": "Thursday",
+    "numbers": [
+      20,
+      24,
+      33,
+      37,
+      42,
+      46
+    ],
+    "special_number": 13
   }
 ]
