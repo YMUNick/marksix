@@ -26038,5 +26038,19 @@
       49
     ],
     "special_number": 41
+  },
+  {
+    "draw_id": "26/124",
+    "draw_date": "2026-11-24",
+    "day_of_week": "Tuesday",
+    "numbers": [
+      1,
+      20,
+      26,
+      28,
+      35,
+      41
+    ],
+    "special_number": 36
   }
 ]
